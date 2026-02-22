@@ -19,6 +19,7 @@ import {UpdateTimeTrackingIntent} from '../Network/Intents/TimeEntry/UpdateTimeT
 import {PostActivityIntent} from '../Network/Intents/Activities/PostActivityIntent.ts';
 import {PutActivityIntent} from '../Network/Intents/Activities/PutActivityIntent.ts';
 import {RemoveActivityIntent} from '../Network/Intents/Activities/RemoveActivityIntent.ts';
+import {addToast} from '@heroui/react';
 
 // region Interface
 
@@ -151,7 +152,7 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<ITimeEntryDto[]> = await sendRequestAsync(new GetTimeEntryIntent(weekDays[0], weekDays[weekDays.length - 1]));
 
     if (response.code !== 200) {
-      // todo logging
+      addToast({title:'Loading Failure', description:'Failed to load time entries...', color:'danger'});
       return;
     }
     else {
@@ -174,11 +175,11 @@ export const ActivityProvider = ({children}: IChildren) => {
   const fetchActiveActivity = async () => {
     const response: IResponse<IActiveActivityDto|null> = await sendRequestAsync(new GetActiveActivityIntent());
 
-    if (response.code == 200) {
+    if (response.code == 200 || response.code == 204) {
       setActiveActivity(response.response);
     }
     else {
-      // todo logging
+      addToast({title:'Loading Failure', description:'Failed to fetch the active activity...', color:'danger'});
     }
   };
 
@@ -192,7 +193,7 @@ export const ActivityProvider = ({children}: IChildren) => {
    * @returns {Promise<void>} A promise that resolves once the tracking process is initiated
    *                          and additional actions (if any) are completed.
    */
-  const startTracking = async (activityId: number) => {
+  const startTracking = async (activityId: number): Promise<void> => {
     const response: IResponse<void> = await sendRequestAsync(new StartTrackingIntent(activityId, ''));
 
     if (response.code == 200) {
@@ -203,9 +204,10 @@ export const ActivityProvider = ({children}: IChildren) => {
           loadTimeEntries(),
         ]
       )
+      addToast({title:'Started Tracking', color:'default'});
     }
     else {
-      // todo logging
+      addToast({title:'Tracking Failure', description:'Failed to start tracking...', color:'danger'});
     }
   };
 
@@ -226,9 +228,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     if (response.code == 200) {
       setActiveActivity(null);
       await loadTimeEntries();
+      addToast({title:'Stopped Tracking', color:'default'});
     }
     else {
-      // todo logging
+      addToast({title:'Tracking Failure', description:'Failed to stop tracking...', color:'danger'});
     }
   };
 
@@ -243,7 +246,7 @@ export const ActivityProvider = ({children}: IChildren) => {
       setActivities(res.response ?? []);
     }
     else {
-      // todo logging
+      addToast({title:'Loading Failure', description:'Failed to activities...', color:'danger'});
     }
 
     setLoading(false);
@@ -255,9 +258,10 @@ export const ActivityProvider = ({children}: IChildren) => {
       setNewTimeEntry(null);
       await loadTimeEntries();
       await fetchActiveActivity();
+      addToast({title:'Created', description:'Successfully created a new time entry...', color:'success'});
     }
     else {
-      // todo logging
+      addToast({title:'Creation Failure', description:'Failed to create a new time entry...', color:'danger'});
     }
   }
 
@@ -266,9 +270,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     if (response.code == 200) {
       await loadTimeEntries();
       await fetchActiveActivity();
+      addToast({title:'Updated', description:'Successfully updated a time entry...', color:'success'});
     }
     else {
-      // todo logging
+      addToast({title:'Update Failure', description:'Failed to update a time entry...', color:'danger'});
     }
   }
 
@@ -277,30 +282,40 @@ export const ActivityProvider = ({children}: IChildren) => {
 
     if (response.code == 200) {
       await loadTimeEntries();
+      addToast({title:'Removed', description:'Successfully removed a time entry...', color:'success'});
     }
     else {
-      // todo logging
+      addToast({title:'Removal Failure', description:'Failed to remove a time entry...', color:'danger'});
     }
   }
 
   const addActivity = async (activity: IActivityDto, workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new PostActivityIntent(activity, workspaceId));
-    if (response.code != 200) {
-      // todo logging
+    if (response.code == 200) {
+      addToast({title:'Created', description:'Successfully added a new activity...', color:'success'});
+    }
+    else {
+      addToast({title:'Creation Failure', description:'Failed to create a new activity...', color:'danger'});
     }
   }
 
   const updateActivity = async (activity: IActivityDto, workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new PutActivityIntent(activity, workspaceId));
-    if (response.code != 200) {
-      // Todo logging
+    if (response.code == 200) {
+      addToast({title:'Updated', description:'Successfully updated an activity...', color:'success'});
+    }
+    else {
+      addToast({title:'Update Failure', description:'Failed to update an activity...', color:'danger'});
     }
   }
 
   const removeActivity = async (activityId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveActivityIntent(activityId));
-    if (response.code != 200) {
-      // Todo logging
+    if (response.code == 200) {
+      addToast({title:'Removed', description:'Successfully removed an activity...', color:'success'});
+    }
+    else {
+      addToast({title:'Removal Failure', description:'Failed to remove an activity...', color:'danger'});
     }
   }
 

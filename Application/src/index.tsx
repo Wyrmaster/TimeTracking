@@ -10,12 +10,14 @@ import {HeroUIProvider} from '@heroui/system';
 import {ActivityProvider} from './Providers/ActivityProvider.tsx';
 import {settings} from './Common/Settings.ts';
 import {WorkspaceProvider} from './Providers/WorkspaceProvider.tsx';
+import {ToastProvider} from '@heroui/react';
 
 document.documentElement.classList.add(settings.GetTheme());
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <HeroUIProvider locale={'en-GB'}>
+      <ToastProvider />
       <BrowserRouter>
         <ApiProvider>
           <WorkspaceProvider>

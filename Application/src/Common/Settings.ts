@@ -22,7 +22,14 @@ class Settings {
    * Sets the token for the current solution
    * @param token new token to set
    */
-  public SetToken = (token: string): void => localStorage.setItem(tokenIdentifier, token);
+  public SetToken = (token: string): void => {
+    if (token == '' || token == null){
+      localStorage.removeItem(tokenIdentifier);
+    }
+    else {
+      localStorage.setItem(tokenIdentifier, token);
+    }
+  }
 
   /**
    * Gets the first day of the week for the current user

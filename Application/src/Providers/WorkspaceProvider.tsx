@@ -8,6 +8,7 @@ import {RemoveWorkspaceIntent} from '../Network/Intents/Workspace/RemoveWorkspac
 import {UpdateWorkspaceIntent} from '../Network/Intents/Workspace/UpdateWorkspaceIntent.ts';
 import {AddWorkspaceIntent} from '../Network/Intents/Workspace/AddWorkspaceIntent.ts';
 import {SetActiveWorkspaceIntent} from '../Network/Intents/Workspace/SetActiveWorkspaceIntent.ts';
+import {addToast} from '@heroui/react';
 
 // region Interface
 
@@ -56,7 +57,7 @@ export const WorkspaceProvider = ({children}: IChildren) => {
       setWorkspaces(res.response ?? []);
     }
     else {
-      // todo logging
+      addToast({title:'Loading Failure', description:'Failed to load workspaces...', color:'danger'});
     }
   }
 
@@ -64,9 +65,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new AddWorkspaceIntent(workspace));
     if (response.code == 200){
       await loadWorkspaces();
+      addToast({title:'Created', description:'Successfully created a new workspace...', color:'success'});
     }
     else {
-      // TODO logging
+      addToast({title:'Creation Failure', description:'Failed to create a new workspace...', color:'danger'});
     }
   }
 
@@ -74,9 +76,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new UpdateWorkspaceIntent(workspace));
     if (response.code == 200){
       await loadWorkspaces();
+      addToast({title:'Updated', description:'Successfully updated a workspace...', color:'success'});
     }
     else {
-      // TODO logging
+      addToast({title:'Update Failure', description:'Failed to update a workspace...', color:'danger'});
     }
   }
 
@@ -84,9 +87,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveWorkspaceIntent(workspaceId));
     if (response.code == 200){
       await loadWorkspaces();
+      addToast({title:'Removed', description:'Successfully removed a workspace...', color:'success'});
     }
     else {
-      // TODO logging
+      addToast({title:'Remove Failure', description:'Failed to remove a workspace...', color:'danger'});
     }
   }
 
@@ -94,9 +98,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new SetActiveWorkspaceIntent(workspaceId));
     if (response.code == 200){
       await loadWorkspaces();
+      addToast({title:'Set Active', description:'Successfully activated a new active workspace...', color:'success'});
     }
     else {
-      // TODO logging
+      addToast({title:'Set Active Failure', description:'Failed to activate a workspace...', color:'danger'});
     }
   }
 

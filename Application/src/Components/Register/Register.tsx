@@ -1,5 +1,5 @@
 import classes from './Register.module.scss';
-import {Button, Input} from '@heroui/react';
+import {addToast, Button, Input} from '@heroui/react';
 import {useState} from 'react';
 import {IResponse} from '../../Network/IResponse.ts';
 import {IToken} from '../../Network/Intents/Authentication/IToken.ts';
@@ -37,9 +37,10 @@ const Register = ({}: IProps) => {
       settings.SetToken(response.response!.bearerToken);
       setToken(response.response!.bearerToken);
       navigate(`../${rts.Home}`);
+      addToast({title:'Registered new User', description:'logging in...', color:'success'});
     }
     else {
-
+      addToast({title:'Registration Failure', description:'Failed to register new user...', color:'danger'});
     }
   }
 

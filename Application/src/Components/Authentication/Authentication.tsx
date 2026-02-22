@@ -1,5 +1,5 @@
 import classes from './Authentication.module.scss';
-import {Button, Input} from '@heroui/react';
+import {addToast, Button, Input} from '@heroui/react';
 import {useState} from 'react';
 import {useApi} from '../../Providers/ApiProvider.tsx';
 import {AuthenticationIntent} from '../../Network/Intents/Authentication/AuthenticationIntent.ts';
@@ -27,6 +27,10 @@ const Authentication = () => {
       settings.SetToken(response.response!.bearerToken);
       setToken(response.response!.bearerToken);
       navigate(`../${rts.Home}`);
+      addToast({title:'Logged In', color:'success'});
+    }
+    else {
+      addToast({title:'Login Failure', description:'Failed to login with the given credentials...', color:'danger'});
     }
   }
 
