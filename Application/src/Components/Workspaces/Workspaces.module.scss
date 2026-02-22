@@ -1,0 +1,13 @@
+.icons {
+  justify-content: center;
+
+  svg {
+    width: 1.2em;
+    fill: hsl(#{var(--heroui-foreground)});
+  }
+}
+
+.controls {
+  flex-shrink: 0;
+  justify-content: flex-end;
+}

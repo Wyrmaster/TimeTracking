@@ -1,0 +1,45 @@
+.drawer {
+  display: flex;
+  flex-flow: column;
+}
+
+.colorNode {
+  height: 20pt;
+  width: 20pt;
+  border-radius: 50%;
+  border: 0 solid transparent;
+}
+
+.pageWrapper {
+  height: calc(100svh - 5em);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.useAllowed {
+  flex: 0 0 auto;
+}
+
+.activities {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  column-count: 4;
+  column-gap: 0.5rem;
+
+  @media (max-width: 1200px) {
+    column-count: 3;
+  }
+
+  @media (max-width: 800px) {
+    column-count: 2;
+  }
+
+  @media (max-width: 500px) {
+    column-count: 1;
+  }
+}
+

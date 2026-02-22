@@ -1,0 +1,28 @@
+@use '../DayRows.module' as days;
+
+.content {
+  border-left: 0.1em solid hsl(#{var(--heroui-divider)});
+  height: 100%;
+  flex-direction: column;
+  &>div {
+    flex-grow: 1;
+    border-bottom: 0.1em solid hsla(#{var(--heroui-divider)} / 0.5);
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.outside {
+  background-color: hsl(#{var(--heroui-default-300)});
+}
+
+.cell {
+  div {
+
+    cursor: pointer;
+    &:hover {
+      background-color: hsl(#{var(--heroui-primary-500)});
+    }
+  }
+}

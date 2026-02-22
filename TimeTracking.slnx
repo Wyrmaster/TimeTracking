@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Persistence/">
+    <Project Path="Persistence/Library/TimeTracking.Persistence.csproj" />
+    <Project Path="Persistence/Postgresql/TimeTracking.Persistence.Postgresql.csproj" />
+    <Project Path="Persistence/SqLite/TimeTracking.Persistence.SqLite.csproj" />
+  </Folder>
+  <Folder Name="/SolutionFiles/">
+    <File Path="compose_linux.yaml" />
+    <File Path="compose_windows.yaml" />
+  </Folder>
+  <Project Path="Service/TimeTracking.Service.csproj" />
+  <Project Path="Test/TimeTracking.Service.Test.csproj" />
+</Solution>

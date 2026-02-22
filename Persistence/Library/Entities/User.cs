@@ -24,16 +24,11 @@ public class User: BaseEntity
   /// <summary>
   ///   Id of the Active Workspace
   /// </summary>
-  public Guid? ActiveWorkspaceId { get; set; }
+  public long? ActiveWorkspaceId { get; set; }
   
   #endregion
 
   #region Shadoww Properties
-
-  /// <summary>
-  ///   Linked Activities
-  /// </summary>
-  public ICollection<Activity>? Activities { get; set; }
 
   /// <summary>
   ///   Linked workspaces for this user

@@ -1,0 +1,12 @@
+
+.control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5em;
+  gap: 1em;
+}
+
+.switchLabel {
+  text-wrap: nowrap;
+}

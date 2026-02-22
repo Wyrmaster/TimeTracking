@@ -10,7 +10,7 @@ public abstract class BaseEntity
   /// <summary>
   ///   Primary Key Identifier
   /// </summary>
-  public Guid Id { get; set; }
+  public long Id { get; set; }
 
   #endregion
 }

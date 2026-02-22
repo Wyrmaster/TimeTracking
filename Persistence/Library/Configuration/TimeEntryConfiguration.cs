@@ -17,13 +17,6 @@ public class TimeEntryConfiguration: BaseEntityConfiguration<TimeEntry>
     builder
       .ToTable("time_entry", "tt");
     
-    // Relations
-    
-    builder
-      .HasOne(entity => entity.Activity)
-      .WithMany(activity => activity.TimeEntries)
-      .IsRequired();
-    
     // Properties
     
     builder

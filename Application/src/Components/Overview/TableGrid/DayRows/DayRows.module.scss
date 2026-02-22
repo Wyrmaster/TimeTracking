@@ -1,0 +1,23 @@
+.tableRow {
+  display: flex;
+  border-width: 0 0.1em 0.1em 0.1em;
+  border-style: solid;
+  border-color: hsl(#{var(--heroui-divider)});
+  transition: background-color 0.2s ease;
+  align-items: center;
+
+  &:last-child {
+    border-radius: 0 0 0.5em 0.5em;
+  }
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  //padding: 1em;
+  span {
+    margin: 1em;
+    user-select: none;
+  }
+}
