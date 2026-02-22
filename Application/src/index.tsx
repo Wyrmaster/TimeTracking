@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-// @ts-ignore
-import './extensions/Extensions';
 import App from './Components/App/App.tsx';
 import {BrowserRouter} from 'react-router-dom';
 import {ApiProvider} from './Providers/ApiProvider.tsx';

@@ -161,11 +161,18 @@ builder.Services.AddAuthorization();
 builder.Logging.AddSerilog
 (
   new LoggerConfiguration()
-    .MinimumLevel.Verbose().WriteTo.Console()
+    .MinimumLevel.Verbose()
+    .WriteTo.Console()
+    .Enrich.FromLogContext()
     .CreateLogger()
 );
 
 WebApplication app = builder.Build();
+
+app.UseDefaultFiles(); // Looks for index.html
+app.UseStaticFiles();  // Serves files from wwwroot
+
+app.MapFallbackToFile("index.html");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -199,4 +206,4 @@ if (app.Environment.IsDevelopment())
   app.UseGraphQLGraphiQL(graphiQlPath);
 }
 
-app.Run();
+app.Run("http://localhost:9050/");
