@@ -26,9 +26,6 @@ jobs:
         username: ${{ github.actor }}
         # Password or personal access token used to log against the Docker registry
         password: ${{ secrets.TOKEN }}
-          
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag time_tracking:$(date +%s)
 
     - name: Build and push Docker images
       # You may pin to the exact commit or the version.
