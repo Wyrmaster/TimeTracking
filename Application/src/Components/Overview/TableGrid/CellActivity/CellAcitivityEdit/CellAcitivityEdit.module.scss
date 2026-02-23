@@ -1,0 +1,34 @@
+.timeTrackingEdit {
+  min-width: 10em;
+  min-height: 10em;
+  padding: 1em;
+
+  h1 {
+    font-size: 1.25em;
+    color: #ffffff;
+  }
+}
+
+$size: 2em;
+
+.stopButton {
+  svg {
+    width: $size;
+    height: $size;
+  }
+  path {
+    fill: #ffffff;
+  }
+}
+
+.tofro {
+  width: 3em;
+  color: #ffffff;
+}
+
+.activityBullet {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+}

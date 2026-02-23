@@ -18,11 +18,9 @@ public class WorkspaceConfiguration: BaseEntityConfiguration<Workspace>
     
     builder
       .HasMany(entity => entity.Activities)
-      .WithOne(entity => entity.Workspace);
-    
-    builder
-      .HasOne(entity => entity.User)
-      .WithMany(entity => entity.Workspaces);
+      .WithOne(entity => entity.Workspace)
+      .HasForeignKey("workspace_id")
+      .OnDelete(DeleteBehavior.Cascade);
     
     // Properties
     

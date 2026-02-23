@@ -39,6 +39,9 @@ public class Workspace: BaseEntity
   /// </summary>
   public User? User { get; set; }
 
+  /// <summary>
+  ///   shadow property to use as a navigation partner for the active workspace reference
+  /// </summary>
   public User? ActiveWorkspaceUser { get; set; }
 
   #endregion

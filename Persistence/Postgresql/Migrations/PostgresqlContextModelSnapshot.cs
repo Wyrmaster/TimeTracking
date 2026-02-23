@@ -17,7 +17,7 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.15")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "uuid-ossp");
@@ -25,17 +25,21 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Activity", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("uuid_generate_v4()");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ActivityName")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("activity_name");
+
+                    b.Property<int>("Color")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(256)
@@ -46,31 +50,24 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("side_id");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("WorkspaceId")
-                        .HasColumnType("uuid");
+                    b.Property<long?>("workspace_id")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("WorkspaceId");
+                    b.HasIndex("workspace_id");
 
                     b.ToTable("activities", "tt");
                 });
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.TimeEntry", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("uuid_generate_v4()");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    b.Property<Guid>("ActivityId")
-                        .HasColumnType("uuid");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(256)
@@ -85,24 +82,28 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("start");
 
+                    b.Property<long>("activity_id")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityId");
+                    b.HasIndex("activity_id");
 
                     b.ToTable("time_entry", "tt");
                 });
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("uuid_generate_v4()");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    b.Property<Guid?>("ActiveWorkspaceId")
-                        .IsRequired()
-                        .HasColumnType("uuid");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ActiveWorkspaceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("active_workspace_id");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -118,19 +119,20 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ActiveWorkspaceId")
+                        .IsUnique();
+
                     b.ToTable("users", "tt");
                 });
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Workspace", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("uuid_generate_v4()");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
-                    b.Property<Guid?>("ActiveWorkspaceUserId")
-                        .HasColumnType("uuid");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(256)
@@ -147,31 +149,22 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("name");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<long?>("fk_user_id")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActiveWorkspaceUserId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("fk_user_id");
 
                     b.ToTable("workspace", "tt");
                 });
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Activity", b =>
                 {
-                    b.HasOne("TimeTracking.Persistence.Entities.User", "User")
-                        .WithMany("Activities")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("TimeTracking.Persistence.Entities.Workspace", "Workspace")
                         .WithMany("Activities")
-                        .HasForeignKey("WorkspaceId");
-
-                    b.Navigation("User");
+                        .HasForeignKey("workspace_id")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Workspace");
                 });
@@ -180,29 +173,27 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
                 {
                     b.HasOne("TimeTracking.Persistence.Entities.Activity", "Activity")
                         .WithMany("TimeEntries")
-                        .HasForeignKey("ActivityId")
+                        .HasForeignKey("activity_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Activity");
                 });
 
+            modelBuilder.Entity("TimeTracking.Persistence.Entities.User", b =>
+                {
+                    b.HasOne("TimeTracking.Persistence.Entities.Workspace", "ActiveWorkspace")
+                        .WithOne("ActiveWorkspaceUser")
+                        .HasForeignKey("TimeTracking.Persistence.Entities.User", "ActiveWorkspaceId");
+
+                    b.Navigation("ActiveWorkspace");
+                });
+
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Workspace", b =>
                 {
-                    b.HasOne("TimeTracking.Persistence.Entities.User", "ActiveWorkspaceUser")
-                        .WithMany()
-                        .HasForeignKey("ActiveWorkspaceUserId");
-
-                    b.HasOne("TimeTracking.Persistence.Entities.User", null)
-                        .WithOne("ActiveWorkspace")
-                        .HasForeignKey("TimeTracking.Persistence.Entities.Workspace", "Id")
-                        .HasPrincipalKey("TimeTracking.Persistence.Entities.User", "ActiveWorkspaceId");
-
                     b.HasOne("TimeTracking.Persistence.Entities.User", "User")
                         .WithMany("Workspaces")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("ActiveWorkspaceUser");
+                        .HasForeignKey("fk_user_id");
 
                     b.Navigation("User");
                 });
@@ -214,15 +205,13 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.User", b =>
                 {
-                    b.Navigation("ActiveWorkspace");
-
-                    b.Navigation("Activities");
-
                     b.Navigation("Workspaces");
                 });
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Workspace", b =>
                 {
+                    b.Navigation("ActiveWorkspaceUser");
+
                     b.Navigation("Activities");
                 });
 #pragma warning restore 612, 618

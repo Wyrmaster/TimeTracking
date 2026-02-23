@@ -1,0 +1,40 @@
+﻿services:
+  time_tracking:
+    image: time_tracking:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    ports:
+      - "9500:9500"
+    environment:
+      DataSource: "Postgres"
+      ConnectionStrings__TimeTrackingPostgresql: "Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=TimeTracking;Include Error Detail=true;"
+      ConnectionStrings__TimeTrackingSqlite: "DataSource=./test.db;"
+      Token__Issuer: "TimeTracker"
+      Token__Audience: "TimeTrackers"
+      Token__SecretVariableName: "TokenSecret"
+      TokenSecret: "2f3fedd50944d446d7859a33a656cffe8783161725e127d5195ba88c41fc3ec1db4b0d4bcae14f0f4d76d209840e9c89d24b76b907236ba3355d395131df99fb"
+
+  postgres:
+    image: postgres:latest
+    networks:
+      - app-network
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=TimeTracking
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # as postgres never reaches service_healthy state on its own, we use start_period 
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d TimeTracking" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s # Gives Postgres time to do its initial disk setup
+
+networks:
+  app-network:
+    driver: bridge

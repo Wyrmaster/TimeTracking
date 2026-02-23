@@ -1,0 +1,10 @@
+$foregroundColor: hsl(#{var(--heroui-primary-foreground)});
+
+.themeButton {
+  svg {
+    padding: 0.5em;
+    path {
+      fill: $foregroundColor;
+    }
+  }
+}

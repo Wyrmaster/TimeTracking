@@ -26,6 +26,11 @@ public class Activity: BaseEntity
   /// </summary>
   public byte? SideId { get; set; }
 
+  /// <summary>
+  ///   Color assigned to this activity
+  /// </summary>
+  public int Color { get; set; }
+
   #endregion
 
   #region Shadow Properties
@@ -36,10 +41,8 @@ public class Activity: BaseEntity
   public virtual ICollection<TimeEntry> TimeEntries { get; set; } = [];
 
   /// <summary>
-  ///   Username of the User that created owns this <see cref="Activity"/>
+  ///   Linked Workspace of this actitvity
   /// </summary>
-  public virtual User? User { get; set; }
-
   public virtual Workspace? Workspace { get; set; }
 
   #endregion

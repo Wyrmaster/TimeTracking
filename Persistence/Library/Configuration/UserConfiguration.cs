@@ -19,19 +19,17 @@ public class UserConfiguration: BaseEntityConfiguration<User>
     
     // Relations Properties
 
-    builder
-      .HasMany(entity => entity.Activities)
-      .WithOne(entity => entity.User);
-
+    const string activeWorkspaceId = "";
     builder
       .HasOne(entity => entity.ActiveWorkspace)
-      .WithOne()
-      .HasPrincipalKey<User>(entity => entity.ActiveWorkspaceId)
+      .WithOne(entity => entity.ActiveWorkspaceUser)
+      .HasForeignKey<User>(entity => entity.ActiveWorkspaceId)
       .IsRequired(false);
     
     builder
       .HasMany(entity => entity.Workspaces)
-      .WithOne(entity => entity.User);
+      .WithOne(entity => entity.User)
+      .HasForeignKey("fk_user_id");
     
     // Properties
     
@@ -45,6 +43,11 @@ public class UserConfiguration: BaseEntityConfiguration<User>
       .Property(entity => entity.Password)
       .HasColumnName("password")
       .HasMaxLength(64)
+      .IsRequired();
+    
+    builder
+      .Property(entity => entity.ActiveWorkspaceId)
+      .HasColumnName("active_workspace_id")
       .IsRequired();
   }
 

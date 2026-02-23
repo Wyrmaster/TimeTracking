@@ -1,0 +1,31 @@
+$size: 2.5em;
+$stroke: 30;
+$segments: 8;
+$duration: 4s;
+
+.spinner {
+  width: $size;
+  height: $size;
+
+  g {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 30;
+    stroke-linecap: butt;
+
+    path {
+      animation: lightUp $duration linear infinite reverse;
+      // stagger each segment
+      @for $i from 1 through $segments {
+        &:nth-child(#{$i}) {
+          animation-delay: calc(($i - 1) * ($duration / $segments));
+        }
+      }
+    }
+  }
+}
+
+@keyframes lightUp {
+  0%, 12.5% { stroke: rgba(255, 255, 255, 0.3); }
+  50%, 100% { stroke: rgba(255, 255, 255, 1); }
+}

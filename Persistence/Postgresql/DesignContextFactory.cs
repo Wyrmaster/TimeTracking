@@ -4,10 +4,10 @@ using Npgsql;
 
 namespace TimeTracking.Persistence.Postgresql;
 
-public class DesignContextFactory: IDesignTimeDbContextFactory<PostgresqlContext>
+public class DesignContextFactory : IDesignTimeDbContextFactory<PostgresqlContext>
 {
   #region DesignTimeDbContextFactory
-  
+
   public PostgresqlContext CreateDbContext(string[] args)
   {
     DbContextOptionsBuilder<PostgresqlContext> builder = new();
@@ -20,7 +20,7 @@ public class DesignContextFactory: IDesignTimeDbContextFactory<PostgresqlContext
       Username = "postgres",
       Password = "postgres",
     };
-    
+
     builder.UseNpgsql(connectionStringBuilder.ToString());
 
     return new(builder.Options);

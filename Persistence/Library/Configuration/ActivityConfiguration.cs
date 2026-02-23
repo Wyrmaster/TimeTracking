@@ -18,19 +18,12 @@ public class ActivityConfiguration: BaseEntityConfiguration<Activity>
       .ToTable("activities", "tt");
     
     // Relations
-
-    builder
-      .HasOne(entity => entity.Workspace)
-      .WithMany(entity => entity.Activities);
     
     builder
       .HasMany(entity => entity.TimeEntries)
       .WithOne(entity => entity.Activity)
-      .IsRequired();
-
-    builder
-      .HasOne(entity => entity.User)
-      .WithMany(entity => entity.Activities)
+      .HasForeignKey("activity_id")
+      .OnDelete(DeleteBehavior.Cascade)
       .IsRequired();
     
     // Properties
@@ -51,7 +44,6 @@ public class ActivityConfiguration: BaseEntityConfiguration<Activity>
       .Property(entity => entity.SideId)
       .HasColumnName("side_id")
       .IsRequired(false);
-    
   }
 
   #endregion

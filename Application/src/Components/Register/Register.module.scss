@@ -1,0 +1,17 @@
+.register {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.centering {
+  flex-grow: 1;
+}
+
+.registerBox {
+  min-width: 15em;
+  display: flex;
+  flex-flow: column;
+  align-items: self-end;
+}
