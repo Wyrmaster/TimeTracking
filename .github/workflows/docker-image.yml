@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Time Tracking Docker Image
 
 on:
   push:
