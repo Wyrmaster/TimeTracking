@@ -1,6 +1,6 @@
 ﻿services:
   time_tracking:
-    image: time_tracking:latest
+    image: ghcr.io/wyrmaster/time-tracking:latest
     depends_on:
       postgres:
         condition: service_healthy

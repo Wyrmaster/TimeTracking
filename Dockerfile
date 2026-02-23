@@ -11,7 +11,7 @@ COPY Application/ ./
 RUN npm run build
 
 # --- Stage 2: Base ASP.NET Image ---
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
 WORKDIR /app
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:9500
