@@ -29,9 +29,9 @@ jobs:
         password: ${{ secrets.TOKEN }}
 
     - run: |
-        echo "REPOVARIABLE=${github.REPOVARIABLE}"
-        echo "ref_name=${github.ref_name}"
-        echo "sha=${github.sha}"
+        echo "REPOVARIABLE=${{ github.REPOVARIABLE }}"
+        echo "ref_name=${{ github.ref_name }}"
+        echo "sha=${{ github.sha }}"
           
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag time_tracking:$(date +%s)
