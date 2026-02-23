@@ -12,9 +12,10 @@ RUN npm run build
 
 # --- Stage 2: Base ASP.NET Image ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
 WORKDIR /app
-EXPOSE 9050
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:9500
+EXPOSE 9500
 
 # --- Stage 3: Build .NET Backend ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

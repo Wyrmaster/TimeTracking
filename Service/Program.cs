@@ -161,7 +161,7 @@ builder.Services.AddAuthorization();
 builder.Logging.AddSerilog
 (
   new LoggerConfiguration()
-    .MinimumLevel.Verbose()
+    .MinimumLevel.Information()
     .WriteTo.Console()
     .Enrich.FromLogContext()
     .CreateLogger()
@@ -206,4 +206,4 @@ if (app.Environment.IsDevelopment())
   app.UseGraphQLGraphiQL(graphiQlPath);
 }
 
-app.Run("http://localhost:9050/");
+app.Run();

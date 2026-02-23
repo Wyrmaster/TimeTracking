@@ -7,7 +7,7 @@
     networks:
       - app-network
     ports:
-      - "9051:9050"
+      - "9500:9500"
     environment:
       DataSource: "Postgres"
       ConnectionStrings__TimeTrackingPostgresql: "Host=postgres;Port=5432;Username=postgres;Password=postgres;Database=TimeTracking;Include Error Detail=true;"
@@ -27,6 +27,13 @@
       - POSTGRES_DB=TimeTracking
     ports:
       - "5432:5432"
+    healthcheck:
+      # as postgres never reaches service_healthy state on its own, we use start_period 
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d TimeTracking" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s # Gives Postgres time to do its initial disk setup
 
 networks:
   app-network:
