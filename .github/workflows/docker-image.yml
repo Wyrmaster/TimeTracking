@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 jobs:
 
@@ -27,24 +26,19 @@ jobs:
         username: ${{ github.actor }}
         # Password or personal access token used to log against the Docker registry
         password: ${{ secrets.TOKEN }}
-
-    - run: |
-        echo "REPOVARIABLE=${{ vars.REPOVARIABLE }}"
-        echo "ref_name=${{ github.ref_name }}"
-        echo "sha=${{ github.sha }}"
           
-    # - name: Build the Docker image
-    #   run: docker build . --file Dockerfile --tag time_tracking:$(date +%s)
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag time_tracking:$(date +%s)
 
-    # - name: Build and push Docker images
-    #   # You may pin to the exact commit or the version.
-    #   # uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
-    #   uses: docker/build-push-action@v6.19.2
-    #   with:
-    #     push: true
-    #     tags: |
-    #       ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.ref_name }}
-    #       ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.sha }}
-    #       ghcr.io/${{ vars.REPOVARIABLE }}:latest
+    - name: Build and push Docker images
+      # You may pin to the exact commit or the version.
+      # uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+      uses: docker/build-push-action@v6.19.2
+      with:
+        push: true
+        tags: |
+          ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.ref_name }}
+          ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.sha }}
+          ghcr.io/${{ vars.REPOVARIABLE }}:latest
 
               
