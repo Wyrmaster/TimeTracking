@@ -29,7 +29,7 @@ jobs:
         password: ${{ secrets.TOKEN }}
 
     - run: |
-        echo "REPOVARIABLE=${{ REPOVARIABLE }}"
+        echo "REPOVARIABLE=${{ vars.REPOVARIABLE }}"
         echo "ref_name=${{ github.ref_name }}"
         echo "sha=${{ github.sha }}"
           
@@ -43,8 +43,8 @@ jobs:
     #   with:
     #     push: true
     #     tags: |
-    #       ghcr.io/${{ github.REPOVARIABLE }}:${{ github.ref_name }}
-    #       ghcr.io/${{ github.REPOVARIABLE }}:${{ github.sha }}
-    #       ghcr.io/${{ github.REPOVARIABLE }}:latest
+    #       ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.ref_name }}
+    #       ghcr.io/${{ vars.REPOVARIABLE }}:${{ github.sha }}
+    #       ghcr.io/${{ vars.REPOVARIABLE }}:latest
 
               
