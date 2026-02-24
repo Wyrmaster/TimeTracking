@@ -10,7 +10,7 @@ namespace TimeTracking.Service.GraphQL.Mutations;
 /// <summary>
 ///   GraphQL Mutations handling time tracking
 /// </summary>
-public partial class TimeTrackingMutation: IUserNameResolver
+public partial class TimeTrackingMutation
 {
   #region Fields
 

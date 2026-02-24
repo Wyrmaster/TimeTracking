@@ -23,8 +23,29 @@ interface IProps {
 
 // region Component
 
+/**
+ * Represents a functional React component that renders a visual representation of a calendar or schedule cell
+ * associated with a specific time entry. This component provides interactive functionalities like popovers
+ * for editing the time entry and dynamically updates based on time entry data or layout changes.
+ *
+ * @param {ITimeEntryDto} timeEntry - The detailed time entry object that contains activity and time range information.
+ * @param {Date} date - The reference date to determine the position and visibility of the activity cell within the calendar.
+ * @param {ElementMetric} elementMetric - Contains layout measurement details for rendering the activity cell.
+ * @param {boolean} [newEntry=false] - Indicates whether the time entry is a new and unsaved activity.
+ *
+ * @description
+ * The `CellActivity` component calculates dynamic styles such as `top`, `left`, `width`, and `height`
+ * based on the time entry, current date, and layout metrics. It also computes the duration of the activity
+ * both in numeric and string formats. The component conditionally interacts with a popover UI to allow
+ * modifications to time entries. Real-time updates are handled using `useEffect` hooks for responsiveness
+ * to prop changes or time-lapse updates. Background color and text data are customized based on the
+ * provided activity metadata.
+ */
 const CellActivity = ({ timeEntry, date, elementMetric, newEntry = false }: IProps) => {
 
+  /**
+   * Calculates the top position of the activity cell based on the provided time entry and layout metrics.
+   */
   const calculateTop = () : number => {
     const hourSize: number = cellHeight + 1;
     const startDate: Date = new Date(timeEntry.start);
@@ -36,6 +57,9 @@ const CellActivity = ({ timeEntry, date, elementMetric, newEntry = false }: IPro
     return elementMetric?.headerSize ?? 0;
   }
 
+  /**
+   * Calculates the height of the activity cell based on the provided time entry and layout metrics.
+   */
   const calculateHeight = () : number => {
     const hourSize: number =  cellHeight + 1;
     const endDate: Date = new Date(timeEntry.end ?? new Date().getTime());
@@ -54,16 +78,28 @@ const CellActivity = ({ timeEntry, date, elementMetric, newEntry = false }: IPro
     return hourSize * (23.58) - calculateTop() + elementMetric.headerSize - 1;
   }
 
+  /**
+   * Calculates the left position of the activity cell based on the provided time entry and layout metrics.
+   */
   const calculateLeft = (): number => (elementMetric?.x ?? 0) + (gap / 2.0);
 
+  /**
+   * Calculates the width of the activity cell based on the provided time entry and layout metrics.
+   */
   const calculateWidth = () : number => (elementMetric?.width ?? 0) - gap;
 
+  /**
+   * Calculates the duration of the activity based on the provided time entry and current time.
+   */
   const calculateDuration = () : number => {
     const startDate: Date = new Date(timeEntry.start);
     const endDate: Date = new Date(timeEntry.end ?? new Date().getTime());
     return endDate.getTime() - (startDate.getTime() - 5000);
   }
 
+  /**
+   * Converts the duration of the activity in milliseconds into a formatted string in the format "HH:MM:SS".
+   */
   const calculateDurationString = () : string => {
 
     const hours: number = Math.floor(duration / (1000 * 60 * 60));

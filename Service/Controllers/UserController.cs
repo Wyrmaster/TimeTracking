@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using TimeTracking.Service.Dto;
 using TimeTracking.Service.Interfaces;
-using IAuthenticationService = TimeTracking.Service.Interfaces.IAuthenticationService;
 
 namespace TimeTracking.Service.Controllers;
 

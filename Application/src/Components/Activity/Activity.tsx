@@ -21,6 +21,15 @@ interface IProps {
 
 // region Component
 
+/**
+ * A functional component that renders an activity card with optional features such as editing, description display, and activity tracking.
+ *
+ * @param {Object} props - The properties for the Activity component.
+ * @param {Object} props.activity - The activity object containing details like name, description, and activityColor.
+ * @param {boolean} [props.canEdit=true] - Determines if the activity can be edited. Defaults to true.
+ * @param {Function} [props.onEdit=() => {}] - Callback function triggered when the edit button is pressed. Defaults to an empty function.
+ * @param {boolean} [props.showDescription=false] - Controls whether the activity's description is displayed. Defaults to false.
+ */
 const Activity = (
   {
     activity,

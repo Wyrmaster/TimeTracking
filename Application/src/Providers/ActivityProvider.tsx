@@ -67,6 +67,26 @@ export const useActivity = () => {
 
 // region Provider
 
+/**
+ * Provides activity-related state management and functionality in the application.
+ *
+ * The ActivityProvider component acts as a context provider that encompasses
+ * several stateful and asynchronous functions for managing and interacting with
+ * user activities, time entries, and workspace-related data. This includes operations
+ * like fetching, adding, updating, and removing time entries, as well as managing
+ * active activity tracking and loading associated data.
+ *
+ * Consumers of the ActivityProvider gain access to its state and functionality, enabling
+ * streamlined activity and time entry management throughout the application.
+ *
+ * The provider initializes its state on mount by loading initial time entries and the
+ * active activity. Dependencies such as `useWorkWeek` and selected `date` drive further
+ * reactivity and trigger updates to the application state.
+ *
+ * @param {IChildren} props - The children components wrapped by the provider.
+ *                            The children components can consume the provided state
+ *                            and functionality via React Context.
+ */
 export const ActivityProvider = ({children}: IChildren) => {
 
   const [activeActivity, setActiveActivity] = useState<IActiveActivityDto|null>(null);
@@ -252,6 +272,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     setLoading(false);
   };
 
+  /**
+   * Asynchronously adds a new time entry to the server.
+   * @param timeEntry - The time entry to be added.
+   */
   const addTimeEntry = async (timeEntry: ITimeEntryDto) => {
     const response: IResponse<void> = await sendRequestAsync(new AddTimeEntryIntent(timeEntry));
     if (response.code == 200) {
@@ -265,6 +289,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Asynchronously updates an existing time entry on the server.
+   * @param timeEntry - The time entry to be updated.
+   */
   const updateTimeEntry = async (timeEntry: ITimeEntryDto) => {
     const response: IResponse<void> = await sendRequestAsync(new UpdateTimeTrackingIntent(timeEntry));
     if (response.code == 200) {
@@ -277,6 +305,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Asynchronously removes an existing time entry from the server.
+   * @param timeEntryId - The ID of the time entry to be removed.
+   */
   const removeTimeEntry = async (timeEntryId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveTimeEntryIntent(timeEntryId));
 
@@ -289,6 +321,11 @@ export const ActivityProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Creates a new time entry object with the given start and end date.
+   * @param activity - The activity to be associated with the time entry.
+   * @param workspaceId - The ID of the workspace to which the activity belongs.
+   */
   const addActivity = async (activity: IActivityDto, workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new PostActivityIntent(activity, workspaceId));
     if (response.code == 200) {
@@ -299,6 +336,11 @@ export const ActivityProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Updates an existing activity on the server.
+   * @param activity - The activity to be updated.
+   * @param workspaceId - The ID of the workspace to which the activity belongs.
+   */
   const updateActivity = async (activity: IActivityDto, workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new PutActivityIntent(activity, workspaceId));
     if (response.code == 200) {
@@ -309,6 +351,10 @@ export const ActivityProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Removes an existing activity from the server.
+   * @param activityId - The ID of the activity to be removed.
+   */
   const removeActivity = async (activityId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveActivityIntent(activityId));
     if (response.code == 200) {

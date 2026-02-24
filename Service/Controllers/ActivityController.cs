@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TimeTracking.Persistence;
 using TimeTracking.Persistence.Entities;
 using TimeTracking.Service.Common;
 using TimeTracking.Service.Dto.Data;

@@ -24,9 +24,8 @@ interface IProps {
  * - Gap Between Arcs: 8 degrees.
  * - Arc Angle: Calculated as (360 - 8 * 8) / 8 = 37 degrees.
  */
-const FractionSpinner = ({}: IProps) => {
-
-  return <>
+const FractionSpinner = ({}: IProps) =>
+  <>
     <div>
 
       <svg className={classes.spinner}
@@ -42,21 +41,20 @@ const FractionSpinner = ({}: IProps) => {
           {/*Start: (120,0)*/}
           {/*End:   (120*cos37°, 120*sin37°) = (95.84, 72.22)*/}
 
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(4)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(49)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(94)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(139)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(184)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(229)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(274)" />
-          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(319)" />
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(4)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(49)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(94)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(139)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(184)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(229)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(274)"/>
+          <path d="M 120 0 A 120 120 0 0 1 95.84 72.22" transform="rotate(319)"/>
 
         </g>
       </svg>
 
     </div>
   </>;
-};
 
 // endregion
 

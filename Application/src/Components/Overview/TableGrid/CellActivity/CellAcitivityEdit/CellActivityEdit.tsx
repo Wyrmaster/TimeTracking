@@ -23,6 +23,18 @@ interface IProps {
 
 // region Component
 
+/**
+ * A functional component for editing or creating new time-tracking entries.
+ *
+ * This component provides a user interface for editing an existing time entry or adding a new time entry.
+ * It displays UI elements such as activity selection, time inputs, description fields, and actions for
+ * saving, updating, or deleting the time-tracking entry.
+ *
+ * @param {IProps} props - The properties passed to this component.
+ * @param {ITimeEntryDto} props.timeEntry - The currently selected time entry being edited.
+ * @param {Function} props.popoverClose - Function to close the popover or dialog containing this component.
+ * @param {boolean} props.newEntry - Flags whether the component is being used to create a new entry.
+ */
 const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
 
   const { removeTimeEntry, setNewTimeEntry, addTimeEntry } = useActivity();
@@ -34,6 +46,11 @@ const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
   const [ currentActivity, setCurrentActivity ] = useState<IActivityDto|null>(null);
   const [ description, setDescription ] = useState<string>(timeEntry.description);
 
+  /**
+   * Converts a JavaScript Date object to a CalendarDateTime object.
+   * @param date - The JavaScript Date object to convert.
+   * @returns A CalendarDateTime object representing the same date and time as the input Date object.
+   */
   const getCalendarDateTime = (date: Date): CalendarDateTime =>
     new CalendarDateTime
     (
@@ -76,8 +93,19 @@ const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
     popover.style.backgroundColor = IntToHex(currentActivity.activityColor);
   }, [currentActivity]);
 
+  /**
+   * Generates a unique key for an activity based on its ID.
+   * @param activityId - The ID of the activity.
+   * @returns A string representing the unique key for the activity.
+   */
   const generateActivityKey = (activityId: number) => `activity_${activityId}`;
 
+  /**
+   * Updates the currently selected activity based on the provided keys.
+   * Prevents deselection of the current activity if no keys are provided.
+   *
+   * @param {SharedSelection} keys - The selection keys representing the currently selected activities.
+   */
   const handleActivityChange = (keys: SharedSelection) => {
     const entries = Array.from(keys);
     // prevent deselection of the current activity
@@ -91,6 +119,9 @@ const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
     }
   };
 
+  /**
+   * Saves the changes made to the time entry and closes the popover or dialog.
+   */
   const acceptChange = async () => {
 
     if (!currentActivity) {
@@ -110,6 +141,15 @@ const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
     popoverClose();
   }
 
+  /**
+   * Asynchronously saves a new time entry with the provided activity details,
+   * description, and timestamps, taking into account the user's current time zone.
+   * After saving the entry, it closes the associated popover interface.
+   *
+   * This function retrieves the current system time zone, formats the start and end
+   * timestamps based on the time zone, and invokes a function to add a new time entry
+   * record. If an end time is not provided, it defaults to null.
+   */
   const saveNewEntry = async () => {
     const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     await addTimeEntry({
@@ -122,11 +162,23 @@ const CellActivityEdit = ({ timeEntry, popoverClose, newEntry }: IProps) => {
     popoverClose();
   };
 
+  /**
+   * Deletes the currently selected time entry and closes the popover or dialog.
+   */
   const deleteTimeEntry = async () => {
     await removeTimeEntry(timeEntry.id);
     popoverClose();
   }
 
+  /**
+   * Cancels the current operation by resetting the new time entry and closing the popover.
+   *
+   * This function performs two actions:
+   * 1. Resets the state of the new time entry to null.
+   * 2. Closes the currently open popover, ensuring no unintended actions are performed.
+   *
+   * Typically used to discard changes or exit a workflow that involves time entry or popover interactions.
+   */
   const cancel = () => {
     setNewTimeEntry(null);
     popoverClose();

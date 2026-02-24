@@ -3,7 +3,7 @@
 /// <summary>
 ///   Transfer object describing and Base Object
 /// </summary>
-public class IdDto
+public record IdDto
 {
   #region Properties
 

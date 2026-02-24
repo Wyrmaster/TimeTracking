@@ -17,20 +17,20 @@ import Register from '../Register/Register.tsx';
 /**
  * Global component entry point
  */
-const App = () => {
-
-  return (
-    <div className={['flex','flex-col','min-h-screen','bg-background','text-foreground', 'overflow-hidden', classes.app].join(' ')}>
+const App = () =>
+  <>
+    <div
+      className={['flex', 'flex-col', 'min-h-screen', 'bg-background', 'text-foreground', 'overflow-hidden', classes.app].join(' ')}>
       <Routes>
         <Route path="/"
                element={
-          settings.GetToken() == null
-            ? <Navigate to={rts.Authentication}/>
-            : <Navigate to={rts.Home}/>
-          }
+                 settings.GetToken() == null
+                   ? <Navigate to={rts.Authentication}/>
+                   : <Navigate to={rts.Home}/>
+               }
         />
 
-        <Route path={rts.Authentication} element={<Authentication/>} />
+        <Route path={rts.Authentication} element={<Authentication/>}/>
         <Route path={rts.Register} element={<Register/>}/>
         <Route path={rts.Home} element={<Home/>}>
           <Route path={rts.Overview}
@@ -42,11 +42,10 @@ const App = () => {
           <Route path={rts.Activities} element={<Activities/>}/>
           <Route path={rts.Workspaces} element={<Workspaces/>}/>
         </Route>
-        <Route path={'*'} element={<Loading size={'lg'} label={'Loading ...'}/>} />
+        <Route path={'*'} element={<Loading size={'lg'} label={'Loading ...'}/>}/>
 
       </Routes>
     </div>
-  );
-}
+  </>
 
 export default App;

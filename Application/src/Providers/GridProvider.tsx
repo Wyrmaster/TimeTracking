@@ -29,6 +29,20 @@ export const useGrid = () => {
 
 // region Provider
 
+/**
+ * GridProvider component that manages the state and context for grid cell height.
+ * This component provides the `cellHeight` state and the `changeCellHeight` function
+ * to its children via the `GridContext`.
+ *
+ * @param {IChildren} props - Props containing children elements to render within the context provider.
+ * @returns {JSX.Element} A context provider wrapping its children.
+ *
+ * Context Value:
+ * - `cellHeight` {number}: Represents the height of a grid cell. Default is 60.
+ * - `changeCellHeight` {function}: Function to update the cellHeight. It accepts a single boolean parameter:
+ *    - `true`: Decreases the cellHeight by 10, with a minimum limit of 50.
+ *    - `false`: Increases the cellHeight by 10.
+ */
 export const GridProvider = ({children}: IChildren) => {
 
   const [cellHeight, setCellHeight] = useState<number>(60);

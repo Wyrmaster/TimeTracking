@@ -1,14 +1,13 @@
 ﻿using System.Security.Claims;
 using HotChocolate.Authorization;
 using TimeTracking.Service.Extensions;
-using TimeTracking.Service.Interfaces;
 
 namespace TimeTracking.Service.GraphQL.Mutations;
 
 /// <summary>
 ///   GraphQL Mutation for Activity interactions
 /// </summary>
-public partial class TimeTrackingMutation: IUserNameResolver
+public partial class TimeTrackingMutation
 {
   #region Mutations
 

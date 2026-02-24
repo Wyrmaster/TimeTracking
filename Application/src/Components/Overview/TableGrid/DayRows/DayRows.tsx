@@ -16,6 +16,23 @@ interface IProps {
 
 // region Component
 
+/**
+ * Component representing rows of a time-tracking table, where each row corresponds to an hour
+ * and each column corresponds to a date provided in the `dates` property.
+ *
+ * @param {IProps} props - The input properties for the component.
+ * @param {DateValue[]} props.dates - An array of date objects representing the columns in the table.
+ *
+ * @returns {JSX.Element} A rendered table-like component displaying hourly rows and their
+ * corresponding cells based on the provided dates and time entries.
+ *
+ * This component:
+ * - Dynamically generates rows for each hour of the day (24 rows in total).
+ * - Displays cells for each day (column) within each hour, based on the provided `dates`.
+ * - Tracks metrics for the cells to handle layout-related computation.
+ * - Renders existing time entries or activities visually distributed among the cells.
+ * - Highlights the currently active (new) time entry, if present.
+ */
 const DayRows = ({dates}: IProps) => {
 
   const [metrics, setMetrics] = useState<ElementMetric[]>(new Array(dates.length).fill(null));

@@ -28,6 +28,29 @@ interface IProps {
 
 // region Component
 
+/**
+ * A React functional component for managing and displaying a list of workspaces.
+ *
+ * This component provides functionality for adding, editing, updating, and activating workspaces.
+ * It also allows for toggling between creating a new workspace and editing an existing one through a drawer interface.
+ *
+ * Key Features:
+ * - Displays a table with columns such as name, description, status, and actions for each workspace.
+ * - Allows users to add a new workspace.
+ * - Provides editing options for existing workspaces.
+ * - Offers the ability to activate a workspace.
+ * - Uses chips to visually represent the active or inactive status of each workspace.
+ * - Integrates a drawer for adding or editing workspace details.
+ *
+ * Dependencies:
+ * - `useWorkspace`: Custom hook that provides workspace-related state and actions, including `workspaces`, `addWorkspace`,
+ *   `updateWorkspace`, and `setActiveWorkspace`.
+ * - `useDisclosure`: Custom hook for managing the opening and closing state of the drawer.
+ * - Additional UI components such as `Table`, `Button`, `Tooltip`, `Drawer`, `Input`, and `Textarea`.
+ *
+ * @param {IProps} props - Component properties.
+ * @returns {JSX.Element} The rendered Workspaces component.
+ */
 const Workspaces = ({}: IProps) => {
 
   const { workspaces, addWorkspace, updateWorkspace, setActiveWorkspace } = useWorkspace();
@@ -46,6 +69,14 @@ const Workspaces = ({}: IProps) => {
     {name: 'ACTIONS', uid: 'actions'},
   ];
 
+  /**
+   * Configures and opens the workspace edit modal with the provided workspace details.
+   *
+   * @param {IWorkspaceDto} workspace - The workspace object containing details to populate the edit form.
+   * @property {string} workspace.id - The unique identifier of the workspace.
+   * @property {string} workspace.name - The name of the workspace.
+   * @property {string} workspace.description - A brief description of the workspace.
+   */
   const editWorkspace = (workspace: IWorkspaceDto) => {
     setNewWorkspace(false);
     setWorkspaceId(workspace.id);
@@ -54,6 +85,15 @@ const Workspaces = ({}: IProps) => {
     onOpen();
   };
 
+  /**
+   * A function that initializes and opens the modal or UI component for adding a new workspace.
+   *
+   * This function performs the following actions:
+   * - Sets the `newWorkspace` state to true, indicating that a new workspace is being created.
+   * - Resets the `workspaceName` state to an empty string.
+   * - Resets the `workspaceDescription` state to an empty string.
+   * - Invokes the `onOpen` function to open the modal or UI component.
+   */
   const openAddWorkspace = () => {
     setNewWorkspace(true);
     setWorkspaceName('');
@@ -61,16 +101,51 @@ const Workspaces = ({}: IProps) => {
     onOpen();
   };
 
+  /**
+   * Saves a new workspace by creating a workspace object and adding it to the list of workspaces.
+   * This function initializes the workspace with default values, including a fixed ID and inactive state.
+   * After adding the new workspace, it performs cleanup by triggering the onClose handler.
+   */
   const saveNewWorkspace = () => {
     addWorkspace({id: 0, isActive: false, name: workspaceName, description: workspaceDescription});
     onClose();
   };
 
+  /**
+   * Updates the current workspace and closes the active modal or dialog.
+   *
+   * This function updates the properties of the current workspace
+   * with a new set of attributes such as the workspace ID, activation
+   * status, name, and description. After the workspace update is
+   * triggered, it performs a cleanup action by invoking the close
+   * method to finalize the operation.
+   *
+   * The function relies on pre-defined variables or constants for
+   * workspace-specific details: workspaceId, workspaceName, and
+   * workspaceDescription. It primarily serves as a utility to
+   * update and deactivate the current workspace.
+   */
   const updateCurrentWorkspace = () => {
     updateWorkspace({id: workspaceId, isActive: false, name: workspaceName, description: workspaceDescription});
     onClose();
   };
 
+  /**
+   * A React callback function used to conditionally render different content
+   * based on the specified column key for a given workspace object. This function
+   * supports rendering workspace properties such as name, description, status,
+   * and action buttons in a tabular or list format.
+   *
+   * @param {IWorkspaceDto} workspace - The workspace object containing data
+   *        related to the workspace, including its name, description, and status.
+   * @param {Key} columnKey - The key representing the column whose content
+   *        is to be rendered. Valid keys include 'name', 'description',
+   *        'status', and 'actions'.
+   *
+   * @returns {JSX.Element | string} - The JSX element or string to be rendered
+   *          in the specified column. If no matching column key is specified,
+   *          an empty string is returned.
+   */
   const renderCell = React.useCallback((workspace: IWorkspaceDto, columnKey: Key) => {
 
     switch (columnKey) {

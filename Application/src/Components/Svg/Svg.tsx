@@ -20,14 +20,13 @@ interface IProps {
  * @param {string} [props.viewBox='0 0 24 24'] - The `viewBox` attribute of the `<svg>` element, defining the coordinate system and aspect ratio.
  * @returns {JSX.Element} A JSX element representing an SVG.
  */
-const Svg = ({path, className = [], viewBox = '0 0 24 24'}: IProps) => {
-  return <>
+const Svg = ({path, className = [], viewBox = '0 0 24 24'}: IProps) =>
+  <>
     <svg className={typeof className == 'string' ? className : className.join(' ')}
          viewBox={viewBox}>
-      <path d={path} />
+      <path d={path}/>
     </svg>
   </>;
-};
 
 // endregion
 

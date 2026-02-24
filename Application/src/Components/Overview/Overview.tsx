@@ -16,6 +16,32 @@ interface IProps {
 
 // region Component
 
+/**
+ * A functional component that displays an overview of activities and a table grid layout.
+ *
+ * This component manages the loading and display of activities. It fetches activities data on component
+ * mount, shows loading indicators while fetching, and renders the activities in a list format along with
+ * a flexible grid layout for additional table content.
+ *
+ * State:
+ * - `loadingActivities` (boolean): Indicates whether activities data is currently being loaded.
+ * - `activities` (IActivityDto[]): Stores the list of activities fetched from the data source.
+ *
+ * Dependencies:
+ * - `useActivity()` hook: Provides access to the `loadActivities` function for fetching activities data.
+ * - `useEffect`: Used to execute the data loading logic when the component is mounted.
+ *
+ * Children Components:
+ * - `<Loading>`: Displays a loading indicator with a label when activities are being fetched.
+ * - `<Activity>`: Renders each activity in the fetched list. Each activity entry is a child component.
+ * - `<TableGrid>`: Represents an additional section displayed alongside the activities list in a table grid format.
+ *
+ * Classes:
+ * - Uses a combination of CSS classes for flex layout, spacing, and overflow handling.
+ *
+ * Props:
+ * - `IProps`: An object containing the props passed to this component.
+ */
 const Overview = ({}: IProps) => {
 
   const [loadingActivities, setLoadingActivities] = useState<boolean>(false);

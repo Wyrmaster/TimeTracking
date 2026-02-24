@@ -42,6 +42,22 @@ export const useWorkspace = () => {
 
 // region Provider
 
+/**
+ * WorkspaceProvider is a React component that provides workspace management functionality
+ * through the WorkspaceContext. It allows loading, adding, updating, removing, and setting
+ * an active workspace using API requests.
+ *
+ * @param {IChildren} props - The children components to be wrapped by the provider.
+ *
+ * @returns {JSX.Element} A React context provider for workspace-related operations.
+ *
+ * @property {Array<IWorkspaceDto>} workspaces - The list of loaded workspaces.
+ * @property {Function} loadWorkspaces - Asynchronously fetches and updates the list of workspaces.
+ * @property {Function} addWorkspace - Adds a new workspace and updates the workspace list.
+ * @property {Function} updateWorkspace - Updates an existing workspace and refreshes the workspace list.
+ * @property {Function} removeWorkspace - Removes a workspace by its ID and refreshes the workspace list.
+ * @property {Function} setActiveWorkspace - Sets a workspace as active and refreshes the workspace list.
+ */
 export const WorkspaceProvider = ({children}: IChildren) => {
 
   const { sendRequestAsync } = useApi();
@@ -51,6 +67,9 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     loadWorkspaces().then();
   }, []);
 
+  /**
+   * Fetches and updates the list of workspaces from the API.
+   */
   const loadWorkspaces = async () => {
     const res = await sendRequestAsync(new GetWorkspacesIntent());
     if (res.code == 200){
@@ -61,6 +80,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Adds a new workspace to the list of workspaces and updates the API.
+   * @param workspace - The workspace to be added.
+   */
   const addWorkspace = async (workspace: IWorkspaceDto) => {
     const response: IResponse<void> = await sendRequestAsync(new AddWorkspaceIntent(workspace));
     if (response.code == 200){
@@ -72,6 +95,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Updates an existing workspace in the list of workspaces and updates the API.
+   * @param workspace - The workspace to be updated.
+   */
   const updateWorkspace = async (workspace: IWorkspaceDto) => {
     const response: IResponse<void> = await sendRequestAsync(new UpdateWorkspaceIntent(workspace));
     if (response.code == 200){
@@ -83,6 +110,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Removes a workspace from the list of workspaces and updates the API.
+   * @param workspaceId - The ID of the workspace to be removed.
+   */
   const removeWorkspace = async (workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveWorkspaceIntent(workspaceId));
     if (response.code == 200){
@@ -94,6 +125,10 @@ export const WorkspaceProvider = ({children}: IChildren) => {
     }
   }
 
+  /**
+   * Sets a workspace as active and updates the API.
+   * @param workspaceId - The ID of the workspace to be set as active.
+   */
   const setActiveWorkspace = async (workspaceId: number) => {
     const response: IResponse<void> = await sendRequestAsync(new SetActiveWorkspaceIntent(workspaceId));
     if (response.code == 200){

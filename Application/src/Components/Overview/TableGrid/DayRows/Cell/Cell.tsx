@@ -17,6 +17,19 @@ interface IProps {
 
 // region Component
 
+/**
+ * Cell component represents a single time block in a grid layout, allowing interaction and providing
+ * functionality to create temporary time entries. It dynamically adjusts its height based on grid
+ * configuration and invokes provided metrics relay functions.
+ *
+ * @param {object} props - Properties passed to the component.
+ * @param {number} props.column - The column index this cell belongs to in the grid.
+ * @param {function|null} props.relayMetrics - Callback function to relay element metrics. Can be null.
+ * @param {number} props.hour - The hour associated with this specific grid cell.
+ * @param {Date} props.date - The date object representing the current day's context.
+ *
+ * @returns {JSX.Element} A rendered cell component with interactive sub-divisions.
+ */
 const Cell = ({ column, relayMetrics, hour, date }: IProps) => {
 
   const { ref, metrics } = useElementMetrics([column, hour, relayMetrics == null]);
@@ -34,6 +47,10 @@ const Cell = ({ column, relayMetrics, hour, date }: IProps) => {
     }
   }, [metrics]);
 
+  /**
+   * Creates a temporary new time entry with the given index.
+   * @param {number} index - The index of the sub-division within the hour.
+   */
   const createTemporaryNewEntry = async (index: number) => {
     setNewTimeEntry({
       activity: null,

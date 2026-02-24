@@ -1,6 +1,5 @@
 ﻿using System.Security.Claims;
 using HotChocolate.Authorization;
-using TimeTracking.Persistence;
 using TimeTracking.Persistence.PseudoEntities;
 using TimeTracking.Service.Extensions;
 using TimeTracking.Service.Interfaces;

@@ -5,7 +5,7 @@ namespace TimeTracking.Service.Dto.Data;
 /// <summary>
 ///   Transfer object describing a <see cref="TimeEntry"/>
 /// </summary>
-public class TimeEntryDto: IdDto
+public record TimeEntryDto: IdDto
 {
   #region Properties
 
