@@ -91,7 +91,10 @@ POST /api/v1/dice/side/{side}/
 ### In Progress
 - [ ] Find a fancy project name & icon
 - [ ] Statistics & insights
-- [ ] File exports (CSV, Excel, JSON)
+- [ ] File exports 
+  - [ ] CSV
+  - [ ] Excel
+  - [ ] Json
 - [ ] SQLite import/export functionality
 - [ ] Drag & drop activity management
 - [ ] Activity trigger ID assignment UI
