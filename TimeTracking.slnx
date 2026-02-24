@@ -4,7 +4,12 @@
     <Project Path="Persistence/Postgresql/TimeTracking.Persistence.Postgresql.csproj" />
     <Project Path="Persistence/SqLite/TimeTracking.Persistence.SqLite.csproj" />
   </Folder>
-  <Folder Name="/SolutionFiles/" />
+  <Folder Name="/SolutionFiles/">
+    <File Path="docker-compose.yaml" />
+    <File Path="Dockerfile" />
+    <File Path="LICENSE" />
+    <File Path="README.MD" />
+  </Folder>
   <Project Path="Service/TimeTracking.Service.csproj" />
   <Project Path="Test/TimeTracking.Service.Test.csproj" />
 </Solution>
