@@ -84,31 +84,6 @@ POST /api/v1/dice/side/{side}/
 
 > ⚠️ **Note:** Activity ID assignment currently requires direct database access.
 
-:::mermaid
-
-flowchart LR
-  external_device[External Device]
-  api[API]
-  frontend[Time Tracking Frontend]
-  
-  subgraph Database
-    subgraph Activitiy
-        sideId([Side ID])
-    end
-    
-    subgraph Time Tracking
-        timeTrackingEntry([Time Tracking Entry])
-    end
-  end
-  
-
-  external_device --> |sends id to track| api
-  api --> sideId
-  frontend --> | assign activity to current active device side id | api
-  sideId --> |starts/stops tracking activities| timeTrackingEntry 
-
-:::
-
 ---
 
 ## 📋 Roadmap
