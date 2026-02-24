@@ -77,10 +77,10 @@ POST /api/v1/dice/side/{side}/
 ```
 
 
-| Side ID | Result |
-|---------|--------|
-| `0` | Stop tracking all activities |
-| `1+` | Start/switch to activity with that ID |
+| Side ID | Result                                |
+|---------|---------------------------------------|
+| `0`     |  Stop tracking all activities         |
+| `1+`    | Start/switch to activity with that ID |
 
 > ⚠️ **Note:** Activity ID assignment currently requires direct database access.
 
