@@ -187,6 +187,7 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
   {
     TimeEntry? timeEntry = await context
       .TimeEntries
+      .Include(timeEntry => timeEntry.Activity)
       .FirstOrDefaultAsync
       (
         entry => entry.Id == timeEntryDto.Id

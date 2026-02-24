@@ -3,7 +3,7 @@
 /// <summary>
 ///   Transfer object for active activity data.
 /// </summary>
-public class ActiveActivityDto: ActivityDto
+public record ActiveActivityDto: ActivityDto
 {
   #region Properties
   

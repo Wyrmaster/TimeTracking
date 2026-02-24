@@ -3,7 +3,7 @@
 /// <summary>
 ///   Transferobject for Activities
 /// </summary>
-public class ActivityDto: IdDto
+public record ActivityDto: IdDto
 {
   #region Properties
 

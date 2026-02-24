@@ -10,20 +10,7 @@ namespace TimeTracking.Service.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/statistics/")]
-public class StatisticsController: UserNameController
+public class StatisticsController(Context context): UserNameController
 {
-  #region Fields
-
-  private readonly Context _context;
-
-  #endregion
-
-  #region Constructor
-
-  public StatisticsController(Context context)
-  {
-    this._context = context;
-  }
-
-  #endregion
+  // TODO add statistics endpoints
 }

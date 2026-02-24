@@ -13,6 +13,15 @@ interface IProps {
 
 // region Component
 
+/**
+ * A React functional component that provides the functionality to remove a workspace.
+ * This component displays a tooltip with a "Remove" option, triggers a modal confirmation dialog,
+ * and allows the user to confirm or cancel the deletion of the workspace. Once confirmed,
+ * the workspace is removed along with all its associated activities and tracked times.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.workspace - The workspace object to be removed.
+ */
 const RemoveWorkspace = ({workspace}: IProps) => {
 
   const { removeWorkspace, } = useWorkspace();

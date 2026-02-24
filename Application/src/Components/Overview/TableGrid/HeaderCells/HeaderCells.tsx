@@ -11,11 +11,21 @@ interface IProps {
 
 // region Component
 
+/**
+ * A functional component that generates header cells for a calendar or date-related table.
+ *
+ * @param {IProps} props - The properties object for the component.
+ * @param {Array<DateValue>} props.days - An array of DateValue objects representing the days to be displayed in the header.
+ * @returns {JSX.Element} A rendered JSX element containing the header cells for the days, including their day of the week and formatted date.
+ */
 const HeaderCells = ({days}: IProps) => {
 
+
   /**
+   * Returns the day of the week as a string for a given date.
    *
-   * @param date
+   * @param {DateValue} date - The input date value for which the day of the week needs to be determined.
+   * @returns {string} The name of the day of the week (e.g., "Sunday", "Monday").
    * TODO move this to i18next
    */
   const getDateString = (date: DateValue): string => {

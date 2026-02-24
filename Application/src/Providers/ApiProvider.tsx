@@ -33,6 +33,22 @@ export const useApi = () => {
 
 // region Provider
 
+/**
+ * A component that provides an API context to its children.
+ *
+ * ApiProvider is responsible for creating and managing an API instance
+ * using the `apiFactory` function. It sets up the API context with methods
+ * for sending requests and setting tokens, and makes these methods
+ * available to all child components via the context API.
+ *
+ * @param {IChildren} props - The props containing the children components
+ *                             to be wrapped with the API context.
+ * @param {React.ReactNode} props.children - The child components that will
+ *                                           have access to the API context.
+ *
+ * @returns {JSX.Element} A provider component that wraps its children
+ *                        with the API context.
+ */
 export const ApiProvider = ({children}: IChildren) => {
 
   const [api] = useState<Api>(apiFactory(() => navigate(rts.Authentication)));

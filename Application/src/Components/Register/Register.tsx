@@ -19,6 +19,33 @@ interface IProps {
 
 // region Component
 
+/**
+ * The Register component provides a user interface for registering a new user account.
+ * It includes input fields for username, password, and password confirmation, along with a registration button.
+ * The component handles form validation, API requests for registration, and navigation upon successful registration.
+ * Error handling and success messages are displayed based on the outcomes of the registration process.
+ *
+ * Dependencies:
+ * - useApi: Custom hook to manage API requests and token handling.
+ * - useNavigate: Navigation function for moving between routes.
+ * - useState: React hook for managing state variables.
+ *
+ * State Variables:
+ * - user: Stores the username entered by the user.
+ * - firstPassword: Stores the primary password entered by the user.
+ * - secondPassword: Stores the password confirmation entered by the user.
+ *
+ * Functions:
+ * - handleRegister: Asynchronous function triggered upon pressing the registration button.
+ *   It validates the input, sends a registration request to the server, and handles token storage
+ *   and navigation based on the server response.
+ *
+ * UI Elements:
+ * - User input field for entering the username (required).
+ * - Password input field for entering the primary password (required).
+ * - Repeat Password input field for confirming the primary password (required).
+ * - Register button, enabled only when inputs are valid, sends the registration request upon clicking.
+ */
 const Register = ({}: IProps) => {
 
   const { sendRequestAsync, setToken } = useApi();
@@ -28,6 +55,25 @@ const Register = ({}: IProps) => {
   const [firstPassword, setFirstPassword] = useState<string>('');
   const [secondPassword, setSecondPassword] = useState<string>('');
 
+  /**
+   * Asynchronous function used to handle the user registration process.
+   * It sends a registration request with the provided username and password,
+   * and processes the response to manage application state and navigation.
+   *
+   * On successful registration:
+   * - Saves the bearer token for future authenticated requests.
+   * - Updates application state and navigates the user to the home route.
+   * - Displays a success toast message to indicate successful registration.
+   *
+   * On registration failure:
+   * - Displays an error toast message to notify the user of the failure.
+   *
+   * The function relies on helper modules or utilities for sending requests,
+   * managing settings, navigation, and toast notifications.
+   *
+   * @async
+   * @function
+   */
   const handleRegister = async () => {
     const response: IResponse<IToken> = await sendRequestAsync(new RegisterIntent({
       username: user,

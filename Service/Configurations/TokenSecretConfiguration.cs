@@ -8,10 +8,9 @@ public record TokenSecretConfiguration(string Secret)
 {
   #region Constructor
 
-  public TokenSecretConfiguration() : this(string.Empty)
-  {
-
-  }
+  public TokenSecretConfiguration()
+    : this(string.Empty)
+  { }
 
   #endregion
 }

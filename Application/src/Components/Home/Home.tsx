@@ -17,12 +17,51 @@ interface IProps {
 
 // region Component
 
+/**
+ * The `Home` component serves as the main layout and navigation interface for the application.
+ * It provides a consistent structure for navigation and features, including theme switching
+ * and user logout functionality.
+ *
+ * This component sets up the primary visual layout with a navbar for navigating among key
+ * sections of the app, such as "Overview", "Workspaces", and "Activities". It uses a combination
+ * of hooks and services for functionality such as theme management and authentication handling.
+ *
+ * Key Features:
+ * - Renders a navbar with navigation links to various sections.
+ * - Provides a button to toggle between light and dark themes.
+ * - Includes a logout button to reset the authentication token and navigate to the
+ *   authentication route.
+ * - Uses an `Outlet` component to render child routes within the main content area.
+ *
+ * Hooks and Utilities:
+ * - `useState`: Maintains the current application theme.
+ * - `useApi`: Accesses the API context to manage tokens.
+ * - `useNavigate`: Provides navigation functionality.
+ *
+ * Methods:
+ * - `changeTheme(theme: string)`: Changes the application's theme and updates
+ *   the relevant settings within the app and document element.
+ * - `logout()`: Resets the user's authentication state and navigates to the authentication page.
+ *
+ * Dependencies:
+ * - Navbar components (e.g., `Navbar`, `NavbarBrand`, `NavbarContent`, `NavbarItem`).
+ * - Button and SVG components for interactivity.
+ * - React Router's `Outlet` for nested routing.
+ *
+ * Props:
+ * - `IProps`: Interface for expected props. No additional props are actively used
+ *   in this implementation.
+ */
 const Home = ({}: IProps) => {
 
   const [theme, setTheme] = useState<string>(settings.GetTheme);
   const { setToken } = useApi();
   const navigate: NavigateFunction = useNavigate();
 
+  /**
+   * Changes the application's theme and updates the relevant settings within the app and document element.'
+   * @param theme The new theme to apply. Can be either 'light' or 'dark'.
+   */
   const changeTheme = (theme: string) => {
     setTheme(theme);
     settings.SetTheme(theme);
@@ -30,6 +69,9 @@ const Home = ({}: IProps) => {
     document.documentElement.classList.add(settings.GetTheme());
   }
 
+  /**
+   * Resets the user's authentication state and navigates to the authentication page.'
+   */
   const logout = () => {
     settings.SetToken('');
     setToken('');
