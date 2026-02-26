@@ -8,6 +8,10 @@ A self-hosted, activity-based time tracking application built for precision and 
 
 Take control of your time with an intuitive, self-hosted time tracking solution. Create workspaces, manage activities, and track your productivity in real-time—all with the flexibility to store your data exactly where you want it.
 
+![img.png](Images/TimeTrackingOverview.png)
+
+![img.png](Images/TimeTrackingActivities.png)
+
 ---
 
 ## 🚀 Quick Start
