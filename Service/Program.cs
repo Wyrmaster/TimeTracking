@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using TimeTracking.Persistence.Postgresql;
 using TimeTracking.Persistence.SqLite;
 using TimeTracking.Service.Common;
 using TimeTracking.Service.Configurations;
+using TimeTracking.Service.Endpoints;
 using TimeTracking.Service.GraphQL;
 using TimeTracking.Service.GraphQL.Mutations;
 using TimeTracking.Service.Interfaces;
@@ -64,6 +66,7 @@ builder
     };
   });
 
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
   c.SwaggerDoc("v1", new OpenApiInfo{ Title = "TimeTracking", Version = "v1" });
@@ -143,6 +146,7 @@ builder.Services.AddScoped<ITimeTrackingService, TimeTrackingService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationServiceService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddSingleton(new TokenSecretConfiguration(tokenSecret));
 
 builder.Services
@@ -177,10 +181,6 @@ app.MapFallbackToFile("index.html");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
-app.MapGraphQL(graphQlPath);
-app.MapNitroApp(graphiQlPath);
-
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
@@ -192,18 +192,18 @@ if (app.Environment.IsDevelopment())
     options.RoutePrefix = "swagger";
 
   });
-}if (app.Environment.IsDevelopment())
-{
-  app.UseSwagger();
-  app.UseSwaggerUI();
-
-  app.UseSwaggerUI(options =>
-  {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-    options.RoutePrefix = "swagger";
-  });
-  
-  app.UseGraphQLGraphiQL(graphiQlPath);
 }
 
-app.Run();
+app
+  .MapActivityEndpoints()
+  .MapDiceEndpoints()
+  .MapTimeTrackingEndpoints()
+  .MapWorkspaceEndpoints()
+  .MapAuthenticationEndpoints()
+  .MapStatisticsEndpoints()
+;
+
+app.MapGraphQL(graphQlPath);
+app.MapNitroApp(graphiQlPath);
+
+app.Run("http://0.0.0.0:3200");
