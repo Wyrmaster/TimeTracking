@@ -1,0 +1,49 @@
+$hour-line: rgba(128, 128, 128, 0.45);
+$quarter-line: rgba(128, 128, 128, 0.18);
+
+/**
+ * Hour separator drawn at the bottom of every hour row of the time column.
+ */
+.timeCell {
+  background-image: linear-gradient(to top, $hour-line 0 1px, transparent 1px);
+}
+
+/**
+ * Hour separator plus the three quarter hour intervals of a single hour row.
+ */
+.dayCell {
+  background-image:
+    linear-gradient(to top, $hour-line 0 1px, transparent 1px),
+    repeating-linear-gradient(to bottom, transparent 0 calc(25% - 1px), $quarter-line calc(25% - 1px) 25%);
+}
+
+.tile {
+  transition: filter 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+/**
+ * Marks a time entry that is still running and therefore keeps growing.
+ */
+.activeTile {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.24) 0 6px,
+      transparent 6px 12px
+    );
+    animation: tileStripes 900ms linear infinite;
+  }
+}
+
+@keyframes tileStripes {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 17px 0;
+  }
+}
