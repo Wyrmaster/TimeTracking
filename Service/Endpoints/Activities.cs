@@ -24,7 +24,7 @@ public static class Activities
       .MapGroup("api/v1/activity/")
       .RequireAuthorization();
 
-    group.MapGet("{workspaceId:long}/", Activities.GetActivitiesAsync);
+    group.MapGet("/", Activities.GetActivitiesAsync);
 
     group.MapPost("{workspaceId:long}/", Activities.AddActivityAsync);
 
@@ -56,7 +56,7 @@ public static class Activities
   (
     HttpContext context,
     IActivityService activityService,
-    [FromRoute] long? workspaceId = null,
+    [FromQuery] long? workspaceId = null,
     [FromQuery] int offset = 0,
     [FromQuery] int count = 50,
     [FromQuery] string? query = null,
