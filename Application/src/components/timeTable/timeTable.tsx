@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import classes from './timeTable.module.scss';
-import {Box, Flex, Table, Text} from '@chakra-ui/react';
+import {Box, Flex, For, Table, Text} from '@chakra-ui/react';
 import type {DateValue} from '@internationalized/date';
 import type {ITimeEntryDto} from '../../network/intents/timeEntry/timeEntryDto.ts';
 import {
@@ -148,63 +148,67 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
         <Table.Root variant={'outline'}
                     size={'sm'}
                     tableLayout={'fixed'}
-                    width={'100%'}
                     stickyHeader>
-          <Table.Header bg={'bg.emphasized'}>
-            <Table.Row height={HEADER_HEIGHT}>
+          <Table.Header>
+            <Table.Row bg={'bg.emphasized'}>
               <Table.ColumnHeader width={TIME_COLUMN_WIDTH}
-                                  height={HEADER_HEIGHT}
                                   paddingY={'0'}
                                   textAlign={'center'}>
                 Time
               </Table.ColumnHeader>
-              {days.map((day: DateValue, dayIndex: number) => {
-                const isToday: boolean = isSameDay(day, now);
+              <For each={days}>
+                {(day: DateValue, dayIndex: number) => {
+                  const isToday: boolean = isSameDay(day, now);
 
-                return <Table.ColumnHeader key={dayIndex}
-                                           height={HEADER_HEIGHT}
-                                           paddingY={'0'}
-                                           textAlign={'center'}
-                                           color={isToday ? 'fg' : 'fg.muted'}>
-                  <Text fontWeight={isToday ? 'bold' : 'semibold'}
-                        lineHeight={'short'}>
-                    {new Date(day.year, day.month - 1, day.day).toLocaleDateString(undefined, {weekday: 'short'})}
-                  </Text>
-                  <Text textStyle={'xs'}
-                        color={'fg.muted'}
-                        lineHeight={'short'}>
-                    {`${day.day.toString().padStart(2, '0')}.${day.month.toString().padStart(2, '0')}.`}
-                  </Text>
-                </Table.ColumnHeader>;
-              })}
+                  return <Table.ColumnHeader key={dayIndex}
+                                             height={HEADER_HEIGHT}
+                                             paddingY={'0'}
+                                             textAlign={'center'}
+                                             color={isToday ? 'fg' : 'fg.muted'}>
+                    <Text fontWeight={isToday ? 'bold' : 'semibold'}
+                          lineHeight={'short'}>
+                      {new Date(day.year, day.month - 1, day.day).toLocaleDateString(undefined, {weekday: 'short'})}
+                    </Text>
+                    <Text textStyle={'xs'}
+                          color={'fg.muted'}
+                          lineHeight={'short'}>
+                      {`${day.day.toString().padStart(2, '0')}.${day.month.toString().padStart(2, '0')}.`}
+                    </Text>
+                  </Table.ColumnHeader>;
+                }}
+              </For>
             </Table.Row>
           </Table.Header>
 
           <Table.Body ref={bodyRef}>
-            {hours.map((hour: number) => (
-              <Table.Row key={hour}
-                         height={HOUR_ROW_HEIGHT}>
-                <Table.Cell height={HOUR_ROW_HEIGHT}
-                            paddingY={'0'}
-                            borderBottomWidth={'0'}
-                            borderInlineEndWidth={'1px'}
-                            verticalAlign={'top'}
-                            textAlign={'center'}
-                            color={'fg.muted'}
-                            textStyle={'xs'}
-                            className={classes.timeCell}>
-                  {formatMinutes(hour * MINUTES_PER_HOUR)}
-                </Table.Cell>
-                {days.map((_: DateValue, dayIndex: number) => (
-                  <Table.Cell key={dayIndex}
-                              height={HOUR_ROW_HEIGHT}
-                              padding={'0'}
+            <For each={hours}>
+              {(hour: number) => (
+                <Table.Row key={hour}
+                           height={HOUR_ROW_HEIGHT}>
+                  <Table.Cell height={HOUR_ROW_HEIGHT}
+                              paddingY={'0'}
                               borderBottomWidth={'0'}
                               borderInlineEndWidth={'1px'}
-                              className={classes.dayCell}/>
-                ))}
-              </Table.Row>
-            ))}
+                              verticalAlign={'top'}
+                              textAlign={'center'}
+                              color={'fg.muted'}
+                              textStyle={'xs'}
+                              className={classes.timeCell}>
+                    {formatMinutes(hour * MINUTES_PER_HOUR)}
+                  </Table.Cell>
+                  <For each={days}>
+                    {(_: DateValue, dayIndex: number) => (
+                      <Table.Cell key={dayIndex}
+                                  height={HOUR_ROW_HEIGHT}
+                                  padding={'0'}
+                                  borderBottomWidth={'0'}
+                                  borderInlineEndWidth={'1px'}
+                                  className={classes.dayCell}/>
+                    )}
+                  </For>
+                </Table.Row>
+              )}
+            </For>
           </Table.Body>
         </Table.Root>
 
