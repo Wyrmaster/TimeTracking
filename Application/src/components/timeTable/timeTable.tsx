@@ -19,9 +19,31 @@ import {TimeEntryDialog} from '../timeEntryDialog/timeEntryDialog.tsx';
 // region Constants
 
 /**
- * Height of a single hour row
+ * Height of a single hour row at a zoom level of 1, in rem
  */
-const HOUR_ROW_HEIGHT: string = '4rem';
+const HOUR_ROW_HEIGHT: number = 4;
+
+/**
+ * Smallest allowed zoom level
+ */
+const MIN_ZOOM: number = 0.25;
+
+/**
+ * Largest allowed zoom level
+ */
+const MAX_ZOOM: number = 8;
+
+/**
+ * Factor translating the scroll distance of a wheel event into a change of the zoom level
+ */
+const ZOOM_SENSITIVITY: number = 0.0015;
+
+/**
+ * Scroll distance of a single wheel notch, used to normalize wheel events reporting their
+ * distance in lines or pages instead of pixels
+ */
+const WHEEL_LINE_HEIGHT: number = 16;
+const WHEEL_PAGE_HEIGHT: number = 400;
 
 /**
  * Width of the column containing the hours of the day
@@ -57,6 +79,31 @@ interface IProps {
 const toOffset = (minutes: number): string => `${(minutes / MINUTES_PER_DAY) * 100}%`;
 
 /**
+ * Limits a value to the given range.
+ * @param value The value to limit.
+ * @param minimum The smallest allowed value.
+ * @param maximum The largest allowed value.
+ */
+const clamp = (value: number, minimum: number, maximum: number): number =>
+  Math.min(maximum, Math.max(minimum, value));
+
+/**
+ * Converts the scroll distance of a wheel event into pixels, no matter which unit the browser
+ * reported it in.
+ * @param event The wheel event to normalize.
+ */
+const toPixels = (event: WheelEvent): number => {
+  switch (event.deltaMode) {
+    case WheelEvent.DOM_DELTA_LINE:
+      return event.deltaY * WHEEL_LINE_HEIGHT;
+    case WheelEvent.DOM_DELTA_PAGE:
+      return event.deltaY * WHEEL_PAGE_HEIGHT;
+    default:
+      return event.deltaY;
+  }
+};
+
+/**
  * Renders a week as a table, one row per hour split into quarter hour intervals and one
  * column per day.
  *
@@ -66,6 +113,9 @@ const toOffset = (minutes: number): string => `${(minutes / MINUTES_PER_DAY) * 1
  * an end are still running and therefore grow as time progresses.
  *
  * Clicking a tile opens a dialog to edit the time entry.
+ *
+ * Holding control while scrolling zooms the table, which stretches the hour rows and therefore
+ * all tiles, keeping the point of time below the mouse cursor in place.
  *
  * @param timeEntries The time entries to display.
  * @param days The days rendered as columns.
@@ -77,9 +127,20 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
 
+  /**
+   * The point of time the zoom is centered on, remembered while the zoom level is applied.
+   */
+  const zoomAnchor = useRef<{minute: number, pointerOffset: number}|null>(null);
+
   const [now, setNow] = useState<Date>(new Date());
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<ITimeEntryDto|null>(null);
   const [bodyOffset, setBodyOffset] = useState<{top: number, height: number}>({top: 0, height: 0});
+  const [zoom, setZoom] = useState<number>(1);
+
+  /**
+   * Height of a single hour row at the current zoom level.
+   */
+  const hourRowHeight: string = `${HOUR_ROW_HEIGHT * zoom}rem`;
 
   /**
    * The segments of all time entries, grouped by the day column they belong to.
@@ -120,6 +181,72 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
 
     return () => observer.disconnect();
   }, [days.length]);
+
+  /**
+   * Zooms the table when the wheel is used while control is held down instead of scrolling it.
+   *
+   * The listener is registered manually because it has to be non passive to be able to suppress
+   * the zoom of the browser itself.
+   */
+  useEffect(() => {
+    const scrollArea: HTMLDivElement|null = scrollRef.current;
+
+    if (scrollArea == null) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const body: HTMLTableSectionElement|null = bodyRef.current;
+
+      if (body != null && body.offsetHeight > 0) {
+        const pointerOffset: number = event.clientY - scrollArea.getBoundingClientRect().top;
+        const minute: number =
+          ((scrollArea.scrollTop + pointerOffset - body.offsetTop) / body.offsetHeight) * MINUTES_PER_DAY;
+
+        zoomAnchor.current = {minute: clamp(minute, 0, MINUTES_PER_DAY), pointerOffset};
+      }
+
+      setZoom((current: number) =>
+        clamp(current * Math.exp(-toPixels(event) * ZOOM_SENSITIVITY), MIN_ZOOM, MAX_ZOOM));
+    };
+
+    scrollArea.addEventListener('wheel', handleWheel, {passive: false});
+
+    return () => scrollArea.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  /**
+   * Applies the new zoom level to the tiles and keeps the point of time the zoom was centered on
+   * below the mouse cursor.
+   */
+  useLayoutEffect(() => {
+    const anchor: {minute: number, pointerOffset: number}|null = zoomAnchor.current;
+    const scrollArea: HTMLDivElement|null = scrollRef.current;
+    const body: HTMLTableSectionElement|null = bodyRef.current;
+
+    zoomAnchor.current = null;
+
+    if (scrollArea == null || body == null) {
+      return;
+    }
+
+    // measured here as well, so the tiles are resized within the same frame as the hour rows
+    setBodyOffset({top: body.offsetTop, height: body.offsetHeight});
+
+    if (anchor == null) {
+      return;
+    }
+
+    const anchorOffset: number = body.offsetTop + (anchor.minute / MINUTES_PER_DAY) * body.offsetHeight;
+
+    scrollArea.scrollTop = Math.max(0, anchorOffset - anchor.pointerOffset);
+  }, [zoom]);
 
   /**
    * Scrolls to the current time once, so the relevant part of the day is visible.
@@ -184,8 +311,8 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
             <For each={hours}>
               {(hour: number) => (
                 <Table.Row key={hour}
-                           height={HOUR_ROW_HEIGHT}>
-                  <Table.Cell height={HOUR_ROW_HEIGHT}
+                           height={hourRowHeight}>
+                  <Table.Cell height={hourRowHeight}
                               paddingY={'0'}
                               borderBottomWidth={'0'}
                               borderInlineEndWidth={'1px'}
@@ -199,7 +326,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
                   <For each={days}>
                     {(_: DateValue, dayIndex: number) => (
                       <Table.Cell key={dayIndex}
-                                  height={HOUR_ROW_HEIGHT}
+                                  height={hourRowHeight}
                                   padding={'0'}
                                   borderBottomWidth={'0'}
                                   borderInlineEndWidth={'1px'}
