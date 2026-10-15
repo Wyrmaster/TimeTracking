@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useContext, useEffect, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {useApi} from './apiProvider.tsx';
 import {type DateValue, getDayOfWeek, parseDate} from '@internationalized/date';
 import type {IActiveActivityDto} from '../network/intents/activities/activeActivityDto.ts';
@@ -29,7 +29,7 @@ export interface IActivityContext {
   startTracking: (activityId: number) => Promise<void>;
   stopTracking: () => Promise<void>;
 
-  loadActivities: (workspaceId: number|null, setLoading: (state: boolean) => void, setActivities: (activities: IActivityDto[]) => void) => Promise<void>;
+  loadActivities: (workspaceId: number|null, setLoading?: (state: boolean) => void|null) => Promise<IActivityDto[]>;
   addActivity: (activity: IActivityDto, workspaceId: number) => Promise<void>;
   updateActivity: (activity: IActivityDto, workspaceId: number) => Promise<void>;
   removeActivity: (activityId: number) => Promise<void>;
@@ -54,6 +54,7 @@ export interface IActivityContext {
 
 const ActivityContext: React.Context<IActivityContext|null> = React.createContext<IActivityContext|null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useActivity = () => {
   const context: IActivityContext|null = useContext(ActivityContext);
   if (context == null) {
@@ -149,22 +150,21 @@ export const ActivityProvider = ({children}: IChildren) => {
    *
    * @returns {Promise<void>} A promise that resolves when the function completes execution.
    */
-  const loadTimeEntries = () => {
+  const loadTimeEntries = async (): Promise<void> => {
 
     if (weekDays.length === 0) {
       return;
     }
 
-    sendRequestAsync(new GetTimeEntryIntent(weekDays[0], weekDays[weekDays.length - 1]))
-      .then(r => {
-        if (r.code !== 200) {
-          toaster.create({ description:'Failed to load time entries...', type:'error'});
-          return;
-        }
-        else {
-          setTimeEntries(r.response as ITimeEntryDto[]);
-        }
-    });
+    const r = await sendRequestAsync(new GetTimeEntryIntent(weekDays[0], weekDays[weekDays.length - 1]));
+
+    if (r.code !== 200) {
+      toaster.create({ description:'Failed to load time entries...', type:'error'});
+      return;
+    }
+    else {
+      setTimeEntries(r.response as ITimeEntryDto[]);
+    }
   };
 
   /**
@@ -179,16 +179,15 @@ export const ActivityProvider = ({children}: IChildren) => {
    * @returns {Promise<void>} A promise that resolves once the request is completed
    * and the active activity is set.
    */
-  const fetchActiveActivity = () => {
-    sendRequestAsync(new GetActiveActivityIntent())
-      .then(r => {
-        if (r.code == 200 || r.code == 204) {
-          setActiveActivity(r.response);
-        }
-        else {
-          toaster.create({ description:'Failed to fetch the active activity...', type:'error'});
-        }
-    })
+  const fetchActiveActivity = async (): Promise<void> => {
+    const r = await sendRequestAsync(new GetActiveActivityIntent());
+
+    if (r.code == 200 || r.code == 204) {
+      setActiveActivity(r.response);
+    }
+    else {
+      toaster.create({ description:'Failed to fetch the active activity...', type:'error'});
+    }
   };
 
   /**
@@ -205,8 +204,8 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new StartTrackingIntent(activityId, ''));
 
     if (response.code == 200) {
-      fetchActiveActivity();
-      loadTimeEntries();
+      await fetchActiveActivity();
+      await loadTimeEntries();
       toaster.create( {description: 'Started Tracking...', type :'success'});
     }
     else {
@@ -230,7 +229,7 @@ export const ActivityProvider = ({children}: IChildren) => {
 
     if (response.code == 200) {
       setActiveActivity(null);
-      loadTimeEntries();
+      await loadTimeEntries();
       toaster.create({ description: 'Stopped Tracking', type:'success'});
     }
     else {
@@ -241,18 +240,23 @@ export const ActivityProvider = ({children}: IChildren) => {
   /**
    * Asynchronously loads the activities for the selected workspace.
    */
-  const loadActivities = async (workspaceId: number|null, setLoading: (state: boolean) => void, setActivities: (activities: IActivityDto[]) => void) => {
+  const loadActivities = async (
+    workspaceId: number|null = null,
+    setLoading: (state: boolean) => void = () => {}
+  ) => {
     setLoading(true);
 
-    const res: IResponse<IActivityDto[]> = await sendRequestAsync(new GetActivitiesIntent(workspaceId));
+    const res = await sendRequestAsync(new GetActivitiesIntent(workspaceId))
+    setLoading(false);
+
     if (res.code == 200) {
-      setActivities(res.response ?? []);
+      return res.response as IActivityDto[];
     }
     else {
       toaster.create({ description:'Failed to activities...', type:'error'});
     }
 
-    setLoading(false);
+    return [];
   };
 
   /**
@@ -313,6 +317,7 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new PostActivityIntent(activity, workspaceId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully added a new activity...', type:'success'});
+      await loadActivities();
     }
     else {
       toaster.create({ description:'Failed to create a new activity...', type:'error'});
@@ -328,6 +333,7 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new PutActivityIntent(activity, workspaceId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully updated an activity...', type:'success'});
+      await loadActivities();
     }
     else {
       toaster.create({ description:'Failed to update an activity...', type:'error'});
@@ -342,16 +348,14 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveActivityIntent(activityId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully removed an activity...', type:'success'});
+      await loadActivities();
     }
     else {
       toaster.create({ description:'Failed to remove an activity...', type:'error'});
     }
   }
 
-  useEffect(() => {
-    loadTimeEntries();
-    fetchActiveActivity();
-  }, []);
+  const ignoreInitialRequest = useRef(0);
 
   useEffect(() => {
     settings.SetUseWorkWeek(useWorkWeek);
@@ -360,7 +364,13 @@ export const ActivityProvider = ({children}: IChildren) => {
   }, [useWorkWeek, date]);
 
   useEffect(() => {
-    loadTimeEntries();
+    ignoreInitialRequest.current += 1;
+    // three because this is triggered once by weekdays, useworkweek and date
+    if (ignoreInitialRequest.current <= 3){
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadTimeEntries().then();
   }, [weekDays]);
 
   return <>

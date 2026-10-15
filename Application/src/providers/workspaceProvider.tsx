@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect, useState} from 'react';
+import {createContext, useContext, useState} from 'react';
 import {useApi} from './apiProvider.tsx';
 import type {IWorkspaceDto} from '../network/intents/workspace/workspaceDto.ts';
 import type {IChildren} from '../interfaces/children.ts';
@@ -16,7 +16,7 @@ import {toaster} from '../components/ui/toaster.tsx';
 export interface IWorkspaceContext {
   workspaces: IWorkspaceDto[];
 
-  loadWorkspaces: () => void;
+  loadWorkspaces: () => Promise<void>;
 
   addWorkspace: (workspace: IWorkspaceDto) => void;
   updateWorkspace: (workspace: IWorkspaceDto) => void;
@@ -30,6 +30,7 @@ export interface IWorkspaceContext {
 
 const WorkspaceContext = createContext<IWorkspaceContext|null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWorkspace = () => {
   const context: IWorkspaceContext|null = useContext(WorkspaceContext);
   if (context == null) {
@@ -67,16 +68,14 @@ export const WorkspaceProvider = ({children}: IChildren) => {
   /**
    * Fetches and updates the list of workspaces from the API.
    */
-  const loadWorkspaces = () => {
-    sendRequestAsync(new GetWorkspacesIntent())
-      .then(res => {
-        if (res.code == 200){
-          setWorkspaces(res.response ?? []);
-        }
-        else {
-          toaster.create({ description:'Failed to load workspaces...', type:'error'});
-        }
-      });
+  const loadWorkspaces = async () => {
+    const res = await sendRequestAsync(new GetWorkspacesIntent());
+    if (res.code == 200){
+      setWorkspaces(res.response ?? []);
+    }
+    else {
+      toaster.create({ description:'Failed to load workspaces...', type:'error'});
+    }
   }
 
   /**
@@ -138,10 +137,6 @@ export const WorkspaceProvider = ({children}: IChildren) => {
       toaster.create({ description:'Failed to activate a workspace...', type:'error'});
     }
   }
-
-  useEffect(() => {
-    loadWorkspaces();
-  }, []);
 
   return <>
     <WorkspaceContext.Provider value={{

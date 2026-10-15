@@ -4,6 +4,7 @@ public record StatisticTimeEntryDto
 (
   string ActivityName,
   int Color,
-  DateTime Date,
+  DateTime Start,
+  DateTime End,
   long Duration
 );

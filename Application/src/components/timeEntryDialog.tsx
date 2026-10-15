@@ -15,11 +15,16 @@ import {
   useListCollection,
   VStack
 } from '@chakra-ui/react';
-import type {ITimeEntryDto} from '../../network/intents/timeEntry/timeEntryDto.ts';
-import type {IActivityDto} from '../../network/intents/activities/activityDto.ts';
-import {useActivity} from '../../providers/activityProvider.tsx';
-import {IntToHex} from '../../common/transformer.ts';
-import {asDate} from '../../common/timeGrid.ts';
+import type {ITimeEntryDto} from '../network/intents/timeEntry/timeEntryDto.ts';
+import type {IActivityDto} from '../network/intents/activities/activityDto.ts';
+import {useActivity} from '../providers/activityProvider.tsx';
+import {IntToHex} from '../common/transformer.ts';
+import {asDate} from '../common/timeGrid.ts';
+
+/**
+ * AI GENERATED
+ */
+
 
 interface IProps {
   timeEntry: ITimeEntryDto;

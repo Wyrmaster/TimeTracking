@@ -50,4 +50,17 @@ export abstract class Intent<T> {
 
   // endregion
 
+  // region Protected Methods
+
+  protected static CreateQuery = (items: {key: string, values: (string|null)[]}[]) =>
+    `?` + items
+      .map(item => item
+        .values
+        .filter(entry => entry != null)
+        .map(entry => `${item.key}=${encodeURIComponent(entry)}`)
+        .join('&'))
+      .join('&');
+
+  // endregion
+
 }

@@ -5,7 +5,7 @@ import {settings} from './common/settings.ts';
 import {Authentication} from './pages/authentication/authentication.tsx';
 import {Register} from './pages/register/register.tsx';
 import {Home} from './pages/home/home.tsx';
-import {Activities} from './pages/activities/activities.tsx';
+import Activities from './pages/activities/activities.tsx';
 import {Workspaces} from './pages/workspaces/workspaces.tsx';
 import {Statistics} from './pages/statistics/statistics.tsx';
 import {Overview} from './pages/overview/overview.tsx';

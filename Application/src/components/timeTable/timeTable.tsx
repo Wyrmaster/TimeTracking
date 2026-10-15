@@ -14,7 +14,12 @@ import {
   type ITimeEntrySegment
 } from '../../common/timeGrid.ts';
 import {IntToHex, IntToTextColor} from '../../common/transformer.ts';
-import {TimeEntryDialog} from '../timeEntryDialog/timeEntryDialog.tsx';
+import {TimeEntryDialog} from '../timeEntryDialog.tsx';
+
+/**
+ * AI GENERATED
+ */
+
 
 // region Constants
 
@@ -268,7 +273,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
     <Table.ScrollArea ref={scrollRef}
                       flex={'1'}
                       minHeight={'0'}
-                      margin={'1.5em'}
+                      margin={'0.75em'}
                       rounded={'md'}
                       borderWidth={'1px'}>
       <Box position={'relative'}>

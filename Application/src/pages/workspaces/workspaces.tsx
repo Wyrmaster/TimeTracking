@@ -1,13 +1,16 @@
-import {useEffect} from 'react';
-import classes from './workspaces.module.scss';
 import {useWorkspace} from '../../providers/workspaceProvider.tsx';
 import {Badge, For, HStack, IconButton, Table} from '@chakra-ui/react';
 import {FaToggleOn} from 'react-icons/fa6';
 import {MdAdd, MdModeEdit} from 'react-icons/md';
-import {RemoveWorkspace} from '../../components/removeWorkspace/removeWorkspace.tsx';
+import {RemoveWorkspace} from '../../components/removeWorkspace.tsx';
+import type {IWorkspaceDto} from '../../network/intents/workspace/workspaceDto.ts';
+import {useState} from 'react';
+import {WorkspaceDrawer} from '../../components/workspaceDrawer.tsx';
 
 export const Workspaces = () => {
-  const {workspaces} = useWorkspace();
+  const {workspaces, setActiveWorkspace} = useWorkspace();
+  const [workspaceToEdit, setWorkspaceToEdit] = useState<IWorkspaceDto|null>(null);
+  const [drawerIsOpen, setDrawerIsOpen] = useState<boolean>(false);
 
   return <>
     <Table.ScrollArea margin={'1.5em'}
@@ -41,14 +44,19 @@ export const Workspaces = () => {
                     {
                       workspace.isActive
                         ? <></>
-                        : <IconButton rounded="full"
+                        : <IconButton onClick={() => setActiveWorkspace(workspace.id)}
+                                      rounded={'full'}
                                       variant={'surface'}
                                       size={'sm'}>
-                          <FaToggleOn />
-                        </IconButton>
+                            <FaToggleOn />
+                          </IconButton>
                     }
 
-                    <IconButton rounded="full"
+                    <IconButton onClick={() => {
+                                  setWorkspaceToEdit(workspace);
+                                  setDrawerIsOpen(true);
+                                }}
+                                rounded={'full'}
                                 variant={'surface'}
                                 size={'sm'}>
                       <MdModeEdit />
@@ -67,7 +75,11 @@ export const Workspaces = () => {
         </Table.Body>
       </Table.Root>
     </Table.ScrollArea>
-    <IconButton size={'xl'}
+    <IconButton onClick={() => {
+                  setWorkspaceToEdit(null);
+                  setDrawerIsOpen(true);
+                }}
+                size={'xl'}
                 variant={'surface'}
                 position={'absolute'}
                 bottom={'1em'}
@@ -75,5 +87,9 @@ export const Workspaces = () => {
                 rounded={'full'}>
       <MdAdd />
     </IconButton>
+    <WorkspaceDrawer key={workspaceToEdit?.id ?? 'NewWorkspace'}
+                     workspace={workspaceToEdit}
+                     open={drawerIsOpen}
+                     setOpen={setDrawerIsOpen}/>
   </>;
 };

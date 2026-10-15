@@ -1,9 +1,8 @@
 import type {ReactNode} from 'react';
-import classes from './menubar.module.scss';
 import {Button, Flex, Heading} from '@chakra-ui/react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {LuActivity, LuBriefcase, LuChartColumn, LuLayoutDashboard} from 'react-icons/lu';
-import {rts} from '../../common/routes.ts';
+import {rts} from '../common/routes.ts';
 
 interface IMenuItem {
   label: string;
@@ -31,8 +30,8 @@ export const Menubar = () => {
 
   return <>
     <Flex as={'nav'}
-          className={classes.menubar}
           alignItems={'center'}
+          flexShrink={'0'}
           gap={'2'}
           px={'4'}
           py={'2'}

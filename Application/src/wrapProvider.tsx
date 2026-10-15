@@ -4,11 +4,11 @@ import {ApiProvider} from './providers/apiProvider.tsx';
 import type {IChildren} from './interfaces/children.ts';
 import {Toaster} from './components/ui/toaster.tsx';
 import {BrowserRouter} from 'react-router-dom';
-import {Provider} from './components/ui/provider.tsx';
+import {ChakraProvider, defaultSystem} from '@chakra-ui/react';
 
 export function WrapProvider({children}: IChildren) {
   return <>
-    <Provider>
+    <ChakraProvider value={defaultSystem}>
       <Toaster/>
       <BrowserRouter>
         <ApiProvider>
@@ -19,6 +19,6 @@ export function WrapProvider({children}: IChildren) {
           </ActivityProvider>
         </ApiProvider>
       </BrowserRouter>
-    </Provider>
+    </ChakraProvider>
   </>;
 }

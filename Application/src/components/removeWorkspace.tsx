@@ -1,7 +1,7 @@
 import {IconButton, Dialog, Portal, Button, CloseButton} from '@chakra-ui/react';
 import {MdDelete} from 'react-icons/md';
-import type {IWorkspaceDto} from '../../network/intents/workspace/workspaceDto.ts';
-import {useWorkspace} from '../../providers/workspaceProvider.tsx';
+import type {IWorkspaceDto} from '../network/intents/workspace/workspaceDto.ts';
+import {useWorkspace} from '../providers/workspaceProvider.tsx';
 
 interface IProps {
   workspace: IWorkspaceDto;

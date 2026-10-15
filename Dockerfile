@@ -8,7 +8,7 @@ RUN npm install
 
 # Copy the rest of the source and build
 COPY Application/ ./
-RUN npm run build
+RUN npm run buildchrom
 
 # --- Stage 2: Base ASP.NET Image ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base

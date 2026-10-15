@@ -1,25 +1,26 @@
 import {useState} from 'react';
-import classes from './workspaceDrawer.module.scss';
-import type {IWorkspaceDto} from '../../network/intents/workspace/workspaceDto.ts';
-import {Drawer, Field, Input, Textarea, VStack} from '@chakra-ui/react';
+import type {IWorkspaceDto} from '../network/intents/workspace/workspaceDto.ts';
+import {Button, Drawer, Field, Input, Textarea, VStack} from '@chakra-ui/react';
 import * as React from 'react';
+import {useWorkspace} from '../providers/workspaceProvider.tsx';
 
 interface IProps {
-  workspace: IWorkspaceDto;
-  edit?: boolean;
+  workspace: IWorkspaceDto|null;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const WorkspaceDrawer = (
   {
+    workspace,
     open,
     setOpen,
-    edit = false
   }: IProps) => {
 
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const {addWorkspace, updateWorkspace} = useWorkspace();
+
+  const [name, setName] = useState<string>(workspace?.name ?? '');
+  const [description, setDescription] = useState<string>(workspace?.description ?? '');
 
   return <>
     <Drawer.Root open={open} onOpenChange={e => setOpen(e.open)}>
@@ -28,7 +29,7 @@ export const WorkspaceDrawer = (
         <Drawer.Content>
           <Drawer.CloseTrigger />
           <Drawer.Header>
-            <Drawer.Title>{!edit ? 'New Workspace' : 'Edit Workspace'}</Drawer.Title>
+            <Drawer.Title>{workspace == null ? 'New Workspace' : 'Edit Workspace'}</Drawer.Title>
           </Drawer.Header>
           <Drawer.Body>
             <VStack>
@@ -44,7 +45,17 @@ export const WorkspaceDrawer = (
               </Field.Root>
             </VStack>
           </Drawer.Body>
-          <Drawer.Footer></Drawer.Footer>
+          <Drawer.Footer>
+            <Button variant={'outline'}
+                    onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => workspace == null
+              ? addWorkspace({name, description} as IWorkspaceDto)
+              : updateWorkspace({id: workspace.id,name, description} as IWorkspaceDto)}>
+              Save
+            </Button>
+          </Drawer.Footer>
         </Drawer.Content>
       </Drawer.Positioner>
     </Drawer.Root>

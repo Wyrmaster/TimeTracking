@@ -64,13 +64,16 @@ public class StatisticsService(Context context): IStatisticsService
     return new StatisticsDto
     (
       // ReSharper disable PossibleMultipleEnumeration
-      timeEntries.Select(entry => new StatisticTimeEntryDto
-      (
-        entry.Activity!.ActivityName,
-        entry.Activity.Color,
-        entry.Start!.Value.Date,
-        (entry.End!.Value - entry.Start.Value).Ticks
-      )),
+      timeEntries
+        .OrderBy(entry => entry.Start)
+        .Select(entry => new StatisticTimeEntryDto
+        (
+          entry.Activity!.ActivityName,
+          entry.Activity.Color,
+          entry.Start!.Value,
+          entry.End!.Value,
+          (entry.End!.Value - entry.Start.Value).Ticks
+        )),
       timeEntries
         .GroupBy(entry => entry.Activity!.ActivityName)
         .Select(entry => new StatisticActivityDto
