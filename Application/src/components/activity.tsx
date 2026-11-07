@@ -11,6 +11,7 @@ interface IProps {
   includeDescription?: boolean;
   readonly?: boolean;
   canTrack?: boolean;
+  grow?: boolean;
   edit?: (activity: IActivityDto) => void;
 }
 
@@ -20,6 +21,7 @@ export const Activity = (
     includeDescription = true,
     readonly = false,
     canTrack = false,
+    grow = true,
     edit = () => {},
   }: IProps) => {
 
@@ -27,8 +29,8 @@ export const Activity = (
 
   return <>
     <Box padding={'1.25em'}
-         flexGrow={'1'}
-         flexShrink={'1'}
+         flexGrow={grow ? '1' : '0'}
+         flexShrink={grow ? '1' : '0'}
          flexBasis={'auto'}
          borderRadius={'xl'}
          margin={'1em'}

@@ -245,6 +245,47 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
     return true;
   }
 
+  /// <inheritdoc cref="ITimeTrackingService.GetTrackingStateAsync"/>
+  public async Task<TrackingStateDto> GetTrackingStateAsync(string userName, CancellationToken token = default)
+  {
+    // only scalar projections are queried, so no entities are loaded or tracked
+    IQueryable<TimeEntry> timeEntries = context
+      .TimeEntries
+      .AsNoTracking()
+      .Where(entity => entity.Activity != null
+                       && entity.Activity.Workspace != null
+                       && entity.Activity.Workspace.User != null
+                       && entity.Activity.Workspace.User.Username == userName
+      );
+
+    int count = await timeEntries.CountAsync(token);
+
+    long? latestId = await timeEntries.MaxAsync(entity => (long?)entity.Id, token);
+
+    var active = await timeEntries
+      .Where(entity => entity.End == null)
+      .Select(entity => new
+      {
+        entity.Id,
+        ActivityId = entity.Activity!.Id,
+        entity.Start
+      })
+      .FirstOrDefaultAsync(token);
+
+    long? activeWorkspaceId = await context
+      .Users
+      .AsNoTracking()
+      .Where(user => user.Username == userName)
+      .Select(user => user.ActiveWorkspaceId)
+      .FirstOrDefaultAsync(token);
+
+    return new TrackingStateDto
+    (
+      $"{count}-{latestId}-{active?.Id}-{active?.Start?.Ticks}-{activeWorkspaceId}",
+      active?.ActivityId
+    );
+  }
+
   #endregion
   
   #region Private Methods

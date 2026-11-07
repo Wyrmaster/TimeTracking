@@ -12,7 +12,7 @@ import {MdAdd} from 'react-icons/md';
 const Activities = () => {
 
   const { workspaces } = useWorkspace();
-  const { loadActivities } = useActivity();
+  const { loadActivities, activitiesRevision } = useActivity();
 
   const findActive = (workspaces: IWorkspaceDto[]) =>
     workspaces.find(entry => entry.isActive) ?? null
@@ -27,7 +27,7 @@ const Activities = () => {
 
   useEffect(() => {
     loadActivities(selectedWorkspace?.id ?? null).then(setActivities);
-  }, [selectedWorkspace]);
+  }, [selectedWorkspace, activitiesRevision]);
 
   if (workspaces !== prevWorkspaces) {
     setPrevWorkspaces(workspaces);

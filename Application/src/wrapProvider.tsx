@@ -4,21 +4,25 @@ import {ApiProvider} from './providers/apiProvider.tsx';
 import type {IChildren} from './interfaces/children.ts';
 import {Toaster} from './components/ui/toaster.tsx';
 import {BrowserRouter} from 'react-router-dom';
-import {ChakraProvider, defaultSystem} from '@chakra-ui/react';
+import {ChakraProvider} from '@chakra-ui/react';
+import {system} from './common/theme.ts';
+import {ColorModeProvider} from './components/ui/colorMode.tsx';
 
-export function WrapProvider({children}: IChildren) {
+export const WrapProvider = ({children}: IChildren) => {
   return <>
-    <ChakraProvider value={defaultSystem}>
-      <Toaster/>
-      <BrowserRouter>
-        <ApiProvider>
-          <ActivityProvider>
-            <WorkspaceProvider>
-              {children}
-            </WorkspaceProvider>
-          </ActivityProvider>
-        </ApiProvider>
-      </BrowserRouter>
+    <ChakraProvider value={system}>
+      <ColorModeProvider>
+        <Toaster/>
+        <BrowserRouter>
+          <ApiProvider>
+            <ActivityProvider>
+              <WorkspaceProvider>
+                {children}
+              </WorkspaceProvider>
+            </ActivityProvider>
+          </ApiProvider>
+        </BrowserRouter>
+      </ColorModeProvider>
     </ChakraProvider>
   </>;
-}
+};

@@ -28,6 +28,7 @@ import {asDate} from '../common/timeGrid.ts';
 
 interface IProps {
   timeEntry: ITimeEntryDto;
+  mode?: 'create' | 'edit';
   open: boolean;
   setOpen: (open: boolean) => void;
 }
@@ -55,18 +56,25 @@ const formatDuration = (start: Date, end: Date): string => {
 };
 
 /**
- * Dialog used to edit the timestamps and the activity of a single time entry.
+ * Dialog used to edit the timestamps and the activity of a single time entry, or to create a
+ * new time entry manually.
  *
  * The dialog is meant to be mounted per time entry (e.g. keyed by the selected entry), its
  * form state is therefore initialized from the given time entry and not synchronized afterward.
  *
- * @param timeEntry The time entry that is being edited.
+ * When creating a time entry, the end, and the activity are required and a description can be
+ * provided.
+ *
+ * @param timeEntry The time entry that is being edited or used as template for the new one.
+ * @param mode Whether an existing time entry is edited or a new one is created.
  * @param open Whether the dialog is currently visible.
  * @param setOpen Callback used to change the visibility of the dialog.
  */
-export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
+export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProps) => {
 
-  const {loadActivities, updateTimeEntry} = useActivity();
+  const {loadActivities, updateTimeEntry, addTimeEntry} = useActivity();
+
+  const isCreating: boolean = mode == 'create';
 
   const [activities, setActivities] = useState<IActivityDto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -75,6 +83,7 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
   const [start, setStart] = useState<string>(toDateTimeInput(asDate(timeEntry.start)));
   const [end, setEnd] = useState<string>(timeEntry.end == null ? '' : toDateTimeInput(asDate(timeEntry.end)));
   const [activityId, setActivityId] = useState<number|null>(timeEntry.activity?.id ?? null);
+  const [description, setDescription] = useState<string>(timeEntry.description ?? '');
 
   const {contains} = useFilter({sensitivity: 'base'});
   const {collection, filter, set} = useListCollection<IActivityDto>({
@@ -88,27 +97,37 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
   const endDate: Date|null = end.length == 0 ? null : new Date(end);
 
   const startInvalid: boolean = start.length == 0 || isNaN(startDate.getTime());
-  const endInvalid: boolean = endDate != null
-    && (isNaN(endDate.getTime()) || endDate.getTime() <= startDate.getTime());
+  const endInvalid: boolean = endDate == null
+    ? isCreating
+    : isNaN(endDate.getTime()) || endDate.getTime() <= startDate.getTime();
+  const activityMissing: boolean = isCreating && activityId == null;
 
   /**
    * Persists the edited time entry and closes the dialog.
    */
   const save = async () => {
-    if (startInvalid || endInvalid) {
+    if (startInvalid || endInvalid || activityMissing) {
       return;
     }
 
     setSaving(true);
 
-    await updateTimeEntry({
+    const editedTimeEntry: ITimeEntryDto = {
       ...timeEntry,
+      description: isCreating ? description : timeEntry.description,
       start: startDate,
       end: endDate,
       activity: activityId == null
         ? null
         : activities.find(activity => activity.id == activityId) ?? timeEntry.activity
-    });
+    };
+
+    if (isCreating) {
+      await addTimeEntry(editedTimeEntry);
+    }
+    else {
+      await updateTimeEntry(editedTimeEntry);
+    }
 
     setSaving(false);
     setOpen(false);
@@ -132,7 +151,7 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Edit Time Entry</Dialog.Title>
+              <Dialog.Title>{isCreating ? 'New Time Entry' : 'Edit Time Entry'}</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <VStack gap={'1em'}
@@ -157,10 +176,13 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
                         : `Duration: ${formatDuration(startDate, endDate)}`
                     }
                   </Field.HelperText>
-                  <Field.ErrorText>The end has to be after the start.</Field.ErrorText>
+                  <Field.ErrorText>
+                    {endDate == null ? 'Please provide an end.' : 'The end has to be after the start.'}
+                  </Field.ErrorText>
                 </Field.Root>
 
                 <Combobox.Root collection={collection}
+                               invalid={activityMissing}
                                value={activityId == null ? [] : [activityId.toString()]}
                                defaultInputValue={timeEntry.activity?.name ?? ''}
                                onValueChange={details => setActivityId(
@@ -197,10 +219,19 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
                   </Combobox.Positioner>
                 </Combobox.Root>
 
-                <Text textStyle={'xs'}
-                      color={'fg.muted'}>
-                  {timeEntry.description}
-                </Text>
+                {
+                  isCreating
+                    ? <Field.Root>
+                        <Field.Label>Description</Field.Label>
+                        <Input value={description}
+                               placeholder={'What did you work on?'}
+                               onChange={event => setDescription(event.target.value)}/>
+                      </Field.Root>
+                    : <Text textStyle={'xs'}
+                            color={'fg.muted'}>
+                        {timeEntry.description}
+                      </Text>
+                }
               </VStack>
             </Dialog.Body>
             <Dialog.Footer>
@@ -209,7 +240,7 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
               </Dialog.ActionTrigger>
               <Button variant={'solid'}
                       loading={saving}
-                      disabled={startInvalid || endInvalid}
+                      disabled={startInvalid || endInvalid || activityMissing}
                       onClick={save}>
                 Save
               </Button>

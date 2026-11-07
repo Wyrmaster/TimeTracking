@@ -1,8 +1,9 @@
 import type {ReactNode} from 'react';
-import {Button, Flex, Heading} from '@chakra-ui/react';
+import {Button, Flex, Heading, Spacer} from '@chakra-ui/react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {LuActivity, LuBriefcase, LuChartColumn, LuLayoutDashboard} from 'react-icons/lu';
 import {rts} from '../common/routes.ts';
+import {ColorModeButton} from './ui/colorMode.tsx';
 
 interface IMenuItem {
   label: string;
@@ -49,6 +50,8 @@ export const Menubar = () => {
           {item.label}
         </Button>
       )}
+      <Spacer/>
+      <ColorModeButton/>
     </Flex>
   </>;
 };

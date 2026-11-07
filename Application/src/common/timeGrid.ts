@@ -133,7 +133,11 @@ const splitTimeEntries = (timeEntries: ITimeEntryDto[], days: DateValue[], now: 
 
     const isActive: boolean = timeEntry.end == null;
     const start: Date = asDate(timeEntry.start);
-    const end: Date = isActive ? now : asDate(timeEntry.end as Date);
+    // a running entry may have started after the given `now` was taken (or on a server whose clock is ahead),
+    // it must still be shown instead of being dropped as an entry ending before it starts
+    const end: Date = isActive
+      ? new Date(Math.max(now.getTime(), start.getTime()))
+      : asDate(timeEntry.end as Date);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime()) || end.getTime() < start.getTime()) {
       continue;

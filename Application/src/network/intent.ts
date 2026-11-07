@@ -12,6 +12,11 @@ export abstract class Intent<T> {
   private readonly _method: HttpMethod;
   private readonly _callback: ResponseCallback<T>;
 
+  /**
+   * additional headers sent with the http request
+   */
+  protected _headers: Record<string, string> = {};
+
   // endregion
 
   // region Constructor
@@ -48,6 +53,11 @@ export abstract class Intent<T> {
    */
   public GetCallback = (): ResponseCallback<T> => this._callback;
 
+  /**
+   * additional headers sent with the http request
+   */
+  public GetHeaders = (): Record<string, string> => this._headers;
+
   // endregion
 
   // region Protected Methods
@@ -59,6 +69,7 @@ export abstract class Intent<T> {
         .filter(entry => entry != null)
         .map(entry => `${item.key}=${encodeURIComponent(entry)}`)
         .join('&'))
+      .filter(part => part.length > 0)
       .join('&');
 
   // endregion

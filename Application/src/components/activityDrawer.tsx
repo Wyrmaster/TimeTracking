@@ -31,6 +31,26 @@ export const ActivityDrawer = ({
 
   const { addActivity, updateActivity} = useActivity();
 
+  /**
+   * Persists the activity and closes the drawer once it was saved.
+   */
+  const save = async () => {
+    const dto = {
+      id: activity?.id,
+      name,
+      description,
+      activityColor: HexToInt(color),
+    } as IActivityDto;
+
+    const saved: boolean = activity == null
+      ? await addActivity(dto, workspaceId)
+      : await updateActivity(dto, workspaceId);
+
+    if (saved) {
+      setOpen(false);
+    }
+  };
+
   return <>
     <Drawer.Root open={open}
                  onOpenChange={(e) => setOpen(e.open)}
@@ -91,10 +111,7 @@ export const ActivityDrawer = ({
                       onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() =>
-                                  activity == null
-                                    ? addActivity({name, description, activityColor: HexToInt(color)} as IActivityDto, workspaceId)
-                                    : updateActivity({id: activity.id, name, description, activityColor: HexToInt(color)} as IActivityDto, workspaceId)}>
+              <Button onClick={save}>
                 Save
               </Button>
             </Drawer.Footer>

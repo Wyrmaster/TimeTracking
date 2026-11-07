@@ -13,6 +13,7 @@ import type {IChildren} from '../interfaces/children.ts';
 export interface IApiContext {
   setToken: (token: string) => void;
   sendRequestAsync: <T>(intent: Intent<T>) => Promise<IResponse<T>>;
+  downloadAsync: (intent: Intent<Blob>) => Promise<Blob|null>;
 }
 
 // endregion
@@ -58,6 +59,7 @@ export const ApiProvider = ({children}: IChildren): JSX.Element => {
   return <>
     <ApiContext.Provider value={{
       sendRequestAsync: api?.SendAsync ?? (() => new Promise<IResponse<null>>(r=>r({code: -1, response: null}))),
+      downloadAsync: api?.DownloadAsync ?? (() => Promise.resolve(null)),
       setToken: api?.SetToken ?? (() => {})
     }}>
       {children}

@@ -120,8 +120,8 @@ public class SqLiteContext : Context
   /// <inheritdoc/>
   public override async Task StopTrackingAsync(string username, CancellationToken cancellationToken = default)
   {
-    await this.StopTrackingWithTimestampAsync(username, DateTime.UtcNow, cancellationToken);
-    this.Clean();
+    TimeEntry? stoppedEntry = await this.StopTrackingWithTimestampAsync(username, DateTime.UtcNow, cancellationToken);
+    this.Clean(stoppedEntry);
     await this.SaveChangesAsync(cancellationToken);
   }
 
@@ -132,7 +132,10 @@ public class SqLiteContext : Context
 
     await this.StopTrackingWithTimestampAsync(username, now, cancellationToken);
 
-    Activity activity = await this.Activities.FirstAsync(entry => entry.Id == activityId, cancellationToken: cancellationToken);
+    // tracked, otherwise adding the time entry would insert the activity a second time
+    Activity activity = await this.Activities
+      .AsTracking()
+      .FirstAsync(entry => entry.Id == activityId, cancellationToken: cancellationToken);
     
     this.TimeEntries.Add(new TimeEntry
     {
@@ -209,7 +212,7 @@ public class SqLiteContext : Context
   /// <param name="username">name of the user on which to stop tracking an activity</param>
   /// <param name="now">timestamp to stop tracking at</param>
   /// <param name="cancellationToken"></param>
-  private async Task StopTrackingWithTimestampAsync(string username, DateTime now, CancellationToken cancellationToken = default)
+  private async Task<TimeEntry?> StopTrackingWithTimestampAsync(string username, DateTime now, CancellationToken cancellationToken = default)
   {
     // Stop tracking the previous active activity (set end timestamp)
     TimeEntry? entry = await (
@@ -227,6 +230,8 @@ public class SqLiteContext : Context
       entry.End = now;
       this.Update(entry);
     }
+
+    return entry;
   }
   
   /// <summary>
@@ -246,10 +251,21 @@ public class SqLiteContext : Context
   }
 
   /// <summary>
-  ///   Removes any time entries that have been active for less than 60 seconds
+  ///   Removes the given, just stopped time entry if it has been active for less than 60 seconds
   /// </summary>
-  private void Clean()
-    => this.TimeEntries.RemoveRange(this.TimeEntries.Where(t => t.End == null && t.End - t.Start < TimeSpan.FromSeconds(60)));
+  /// <remarks>
+  ///   The duration is calculated in memory, as sqlite stores timestamps as text and is therefore unable to
+  ///   subtract them within a query.
+  /// </remarks>
+  /// <param name="stoppedEntry">time entry that just stopped tracking, null if nothing was tracked</param>
+  private void Clean(TimeEntry? stoppedEntry)
+  {
+    if (stoppedEntry is { Start: not null, End: not null }
+        && stoppedEntry.End.Value - stoppedEntry.Start.Value < TimeSpan.FromSeconds(60))
+    {
+      this.TimeEntries.Remove(stoppedEntry);
+    }
+  }
 
   #endregion
 }

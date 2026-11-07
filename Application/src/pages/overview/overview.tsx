@@ -14,13 +14,25 @@ import {Activity} from '../../components/activity.tsx';
  */
 export const Overview = () => {
 
-  const {timeEntries, weekDays, date, setDate, loadActivities} = useActivity();
+  const {
+    timeEntries,
+    weekDays,
+    date,
+    setDate,
+    loadActivities,
+    activitiesRevision,
+    refreshTracking
+  } = useActivity();
 
   const [activities, setActivities] = useState<IActivityDto[]>([]);
 
   useEffect(() => {
-    loadActivities(null).then(setActivities);
+    refreshTracking().then();
   }, []);
+
+  useEffect(() => {
+    loadActivities(null).then(setActivities);
+  }, [activitiesRevision]);
 
   /**
    * Formats a given Date object as a string in the format 'YYYY-MM-DD'.
@@ -35,11 +47,19 @@ export const Overview = () => {
   ;
 
   return <>
-    <Flex direction={'row'}>
-      <Flex direction={'column'}>
+    <Flex direction={'row'}
+          flex={'1'}
+          minHeight={'0'}>
+      <Flex direction={'column'}
+            flexShrink={'0'}
+            width={'18rem'}
+            minHeight={'0'}
+            overflowY={'auto'}>
         <For each={activities}>
           {(activity) => <Activity key={activity.id}
                                    canTrack={true}
+                                   grow={false}
+                                   readonly={true}
                                    activity={activity}/>}
         </For>
       </Flex>

@@ -39,13 +39,17 @@ class Api {
     try {
       const response: Response = await fetch(`${this._endPoint}${intent.GetRoute()}`, {
         method: intent.GetMethod(),
+        // conditional requests are handled by the intents themselves, the browser cache must not answer them
+        cache: 'no-store',
         headers: this._token == null
           ? {
               'Content-Type': 'application/json',
+              ...intent.GetHeaders(),
             }
           : {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${this._token}`,
+              ...intent.GetHeaders(),
             },
         body: (intent as unknown as BodyIntent<never, T>)?.GetBody == undefined
           ? null
@@ -63,6 +67,7 @@ class Api {
       }
       responseDto.response = await this.readBodyAsync(response);
       responseDto.code = response.status;
+      responseDto.etag = response.headers.get('ETag');
     }
     catch(err) {
       console.error(err);
@@ -75,6 +80,33 @@ class Api {
     }
 
     return responseDto;
+  };
+
+  /**
+   * Sends a Http Request to the endpoint and returns the body of the response as file
+   * @param intent describing an a route and its parameter
+   * @returns the received file, null if the request failed
+   */
+  public DownloadAsync = async (intent: Intent<Blob>): Promise<Blob|null> => {
+    try {
+      const response: Response = await fetch(`${this._endPoint}${intent.GetRoute()}`, {
+        method: intent.GetMethod(),
+        headers: this._token == null
+          ? {}
+          : {'Authorization': `Bearer ${this._token}`},
+      });
+
+      if (response.status == 401 || response.status == 402) {
+        this._unauthorizedCallback();
+        return null;
+      }
+
+      return response.ok ? await response.blob() : null;
+    }
+    catch (err) {
+      console.error(err);
+      return null;
+    }
   };
 
   public SetToken = (token: string) => {

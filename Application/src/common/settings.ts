@@ -2,9 +2,6 @@ const identifier: string  = 'TimeTracker';
 const tokenIdentifier: string = `${identifier}_Token`;
 const firstDayOfTheWeekIdentifier: string = `${identifier}_FirstDayOfTheWeek`;
 const useWorkWeekIdentifier: string = `${identifier}_UseWorkWeek`;
-const themeIdentifier: string = `${identifier}_Theme`;
-
-const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 
 /**
  * Class describing the settings for the current application
@@ -53,12 +50,6 @@ class Settings {
    */
   public SetUseWorkWeek = (useWorkWeek: boolean): void => localStorage.setItem(useWorkWeekIdentifier, useWorkWeek.toString());
 
-
-  public GetTheme = (): string =>
-    localStorage.getItem(themeIdentifier)
-      ?? (darkModeMql && darkModeMql.matches ? 'dark' : 'light');
-
-  public SetTheme = (theme: string): void => localStorage.setItem(themeIdentifier, theme);
 
   // endregion
 

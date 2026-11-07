@@ -20,6 +20,16 @@ import {PostActivityIntent} from '../network/intents/activities/postActivityInte
 import {PutActivityIntent} from '../network/intents/activities/putActivityIntent.ts';
 import {RemoveActivityIntent} from '../network/intents/activities/removeActivityIntent.ts';
 import {toaster} from '../components/ui/toaster.tsx';
+import {GetTrackingStateIntent} from '../network/intents/tracking/getTrackingStateIntent.ts';
+
+// region Constants
+
+/**
+ * Interval in which the tracking state is polled to detect changes made by other clients
+ */
+const TRACKING_POLL_INTERVAL: number = 15_000;
+
+// endregion
 
 // region Interface
 
@@ -30,9 +40,12 @@ export interface IActivityContext {
   stopTracking: () => Promise<void>;
 
   loadActivities: (workspaceId: number|null, setLoading?: (state: boolean) => void|null) => Promise<IActivityDto[]>;
-  addActivity: (activity: IActivityDto, workspaceId: number) => Promise<void>;
-  updateActivity: (activity: IActivityDto, workspaceId: number) => Promise<void>;
+  addActivity: (activity: IActivityDto, workspaceId: number) => Promise<boolean>;
+  updateActivity: (activity: IActivityDto, workspaceId: number) => Promise<boolean>;
   removeActivity: (activityId: number) => Promise<void>;
+  activitiesRevision: number;
+
+  refreshTracking: () => Promise<void>;
 
   date: DateValue;
   setDate: (date: DateValue) => void;
@@ -141,6 +154,7 @@ export const ActivityProvider = ({children}: IChildren) => {
   const [timeEntries, setTimeEntries] = useState<ITimeEntryDto[]>([]);
   const [weekDays, setWeekDays] = useState<DateValue[]>(generateWeekDays(date));
   const [newTimeEntry, setNewTimeEntry] = useState<ITimeEntryDto|null>(null);
+  const [activitiesRevision, setActivitiesRevision] = useState<number>(0);
 
   /**
    * Fetches and loads time entry data for a specified range of weekdays.
@@ -312,15 +326,18 @@ export const ActivityProvider = ({children}: IChildren) => {
    * Creates a new time entry object with the given start and end date.
    * @param activity - The activity to be associated with the time entry.
    * @param workspaceId - The ID of the workspace to which the activity belongs.
+   * @returns whether the activity was added.
    */
-  const addActivity = async (activity: IActivityDto, workspaceId: number) => {
+  const addActivity = async (activity: IActivityDto, workspaceId: number): Promise<boolean> => {
     const response: IResponse<void> = await sendRequestAsync(new PostActivityIntent(activity, workspaceId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully added a new activity...', type:'success'});
-      await loadActivities();
+      setActivitiesRevision(revision => revision + 1);
+      return true;
     }
     else {
       toaster.create({ description:'Failed to create a new activity...', type:'error'});
+      return false;
     }
   }
 
@@ -328,15 +345,18 @@ export const ActivityProvider = ({children}: IChildren) => {
    * Updates an existing activity on the server.
    * @param activity - The activity to be updated.
    * @param workspaceId - The ID of the workspace to which the activity belongs.
+   * @returns whether the activity was updated.
    */
-  const updateActivity = async (activity: IActivityDto, workspaceId: number) => {
+  const updateActivity = async (activity: IActivityDto, workspaceId: number): Promise<boolean> => {
     const response: IResponse<void> = await sendRequestAsync(new PutActivityIntent(activity, workspaceId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully updated an activity...', type:'success'});
-      await loadActivities();
+      setActivitiesRevision(revision => revision + 1);
+      return true;
     }
     else {
       toaster.create({ description:'Failed to update an activity...', type:'error'});
+      return false;
     }
   }
 
@@ -348,12 +368,82 @@ export const ActivityProvider = ({children}: IChildren) => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveActivityIntent(activityId));
     if (response.code == 200) {
       toaster.create({ description:'Successfully removed an activity...', type:'success'});
-      await loadActivities();
+      setActivitiesRevision(revision => revision + 1);
     }
     else {
       toaster.create({ description:'Failed to remove an activity...', type:'error'});
     }
   }
+
+  /**
+   * Reloads everything that may have been changed by other clients, like the time entries of the
+   * displayed week and the currently tracked activity.
+   */
+  const refreshTracking = async (): Promise<void> => {
+    await loadTimeEntries();
+    await fetchActiveActivity();
+  };
+
+  /**
+   * Latest version of `refreshTracking`, so the polling interval never uses a stale week.
+   */
+  const refreshTrackingRef = useRef(refreshTracking);
+
+  /**
+   * ETag of the last known tracking state.
+   */
+  const trackingEtag = useRef<string|null>(null);
+
+  useEffect(() => {
+    refreshTrackingRef.current = refreshTracking;
+  });
+
+  /**
+   * Polls the fingerprint of the tracking state and reloads the time entries and the active
+   * activity once it changes, e.g. because another client started tracking.
+   *
+   * The request is conditional, so an unchanged state is answered with an empty 304. Polling is
+   * paused while the page is hidden or no user is signed in.
+   */
+  useEffect(() => {
+    let polling: boolean = false;
+
+    const poll = async () => {
+      if (polling || document.visibilityState == 'hidden' || settings.GetToken() == null) {
+        return;
+      }
+
+      polling = true;
+      const response = await sendRequestAsync(new GetTrackingStateIntent(trackingEtag.current));
+      polling = false;
+
+      if (response.code != 200 || response.etag == null) {
+        return;
+      }
+
+      const changed: boolean = trackingEtag.current != null && trackingEtag.current != response.etag;
+      trackingEtag.current = response.etag;
+
+      if (changed) {
+        await refreshTrackingRef.current();
+      }
+    };
+
+    const pollWhenVisible = () => {
+      if (document.visibilityState == 'visible') {
+        poll().then();
+      }
+    };
+
+    poll().then();
+    const handle = setInterval(poll, TRACKING_POLL_INTERVAL);
+    document.addEventListener('visibilitychange', pollWhenVisible);
+
+    return () => {
+      clearInterval(handle);
+      document.removeEventListener('visibilitychange', pollWhenVisible);
+    };
+  }, []);
 
   const ignoreInitialRequest = useRef(0);
 
@@ -393,7 +483,9 @@ export const ActivityProvider = ({children}: IChildren) => {
       setNewTimeEntry: timeEntry => setNewTimeEntry(timeEntry),
       addActivity,
       updateActivity,
-      removeActivity
+      removeActivity,
+      activitiesRevision,
+      refreshTracking
     }}>
       {children}
     </ActivityContext.Provider>

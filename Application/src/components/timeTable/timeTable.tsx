@@ -4,12 +4,17 @@ import {Box, Flex, For, Table, Text} from '@chakra-ui/react';
 import type {DateValue} from '@internationalized/date';
 import type {ITimeEntryDto} from '../../network/intents/timeEntry/timeEntryDto.ts';
 import {
+  asDate,
   formatMinutes,
   getHoursOfDay,
   getMinutesOfDay,
+  getStartOfDay,
+  HOURS_PER_DAY,
   isSameDay,
   MINUTES_PER_DAY,
   MINUTES_PER_HOUR,
+  MINUTES_PER_QUARTER,
+  QUARTERS_PER_HOUR,
   splitTimeEntries,
   type ITimeEntrySegment
 } from '../../common/timeGrid.ts';
@@ -70,6 +75,14 @@ const TICK_INTERVAL: number = 30_000;
  */
 const FALLBACK_COLOR: number = 0x6B7280;
 
+/**
+ * Indices of all quarter hour intervals of a day
+ */
+const QUARTERS_OF_DAY: number[] = Array.from(
+  {length: HOURS_PER_DAY * QUARTERS_PER_HOUR},
+  (_, quarter: number) => quarter,
+);
+
 // endregion
 
 interface IProps {
@@ -82,6 +95,27 @@ interface IProps {
  * @param minutes The minutes since midnight.
  */
 const toOffset = (minutes: number): string => `${(minutes / MINUTES_PER_DAY) * 100}%`;
+
+/**
+ * Creates a new, not yet persisted time entry covering a single quarter hour interval of a day.
+ * @param day The day the time entry is created for.
+ * @param quarter Index of the quarter hour interval within the day.
+ */
+const createDraftTimeEntry = (day: DateValue, quarter: number): ITimeEntryDto => {
+  const start: Date = getStartOfDay(day);
+  start.setMinutes(quarter * MINUTES_PER_QUARTER);
+
+  const end: Date = new Date(start);
+  end.setMinutes(end.getMinutes() + MINUTES_PER_QUARTER);
+
+  return {
+    id: 0,
+    description: '',
+    start,
+    end,
+    activity: null,
+  };
+};
 
 /**
  * Limits a value to the given range.
@@ -117,7 +151,8 @@ const toPixels = (event: WheelEvent): number => {
  * split up, so every day shows the part of the entry that belongs to it, and time entries without
  * an end are still running and therefore grow as time progresses.
  *
- * Clicking a tile opens a dialog to edit the time entry.
+ * Clicking a tile opens a dialog to edit the time entry, clicking an empty quarter hour interval
+ * opens the same dialog to create a new time entry for that interval.
  *
  * Holding control while scrolling zooms the table, which stretches the hour rows and therefore
  * all tiles, keeping the point of time below the mouse cursor in place.
@@ -139,6 +174,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
 
   const [now, setNow] = useState<Date>(new Date());
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<ITimeEntryDto|null>(null);
+  const [draftTimeEntry, setDraftTimeEntry] = useState<ITimeEntryDto|null>(null);
   const [bodyOffset, setBodyOffset] = useState<{top: number, height: number}>({top: 0, height: 0});
   const [zoom, setZoom] = useState<number>(1);
 
@@ -158,6 +194,15 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
 
     return grouped;
   }, [timeEntries, days, now]);
+
+  /**
+   * Takes a fresh timestamp whenever new time entries arrive, so a time entry that just started
+   * is drawn with its current length right away.
+   */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(new Date());
+  }, [timeEntries]);
 
   /**
    * Keeps running time entries growing.
@@ -356,6 +401,22 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
             <Box key={dayIndex}
                  flex={'1'}
                  position={'relative'}>
+              {/* quarter hour intervals, clicking one creates a new time entry */}
+              <Flex direction={'column'}
+                    position={'absolute'}
+                    inset={'0'}>
+                {QUARTERS_OF_DAY.map((quarter: number) => (
+                  <Box key={quarter}
+                       flex={'1'}
+                       cursor={'pointer'}
+                       pointerEvents={'auto'}
+                       _hover={{bg: 'colorPalette.subtle'}}
+                       colorPalette={'blue'}
+                       title={`New time entry at ${formatMinutes(quarter * MINUTES_PER_QUARTER)}`}
+                       onClick={() => setDraftTimeEntry(createDraftTimeEntry(day, quarter))}/>
+                ))}
+              </Flex>
+
               {segmentsByDay[dayIndex]?.map((segment: ITimeEntrySegment) => {
                 const color: string = IntToHex(segment.timeEntry.activity?.activityColor ?? FALLBACK_COLOR);
 
@@ -432,6 +493,19 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
                            setOpen={open => {
                              if (!open) {
                                setSelectedTimeEntry(null);
+                             }
+                           }}/>
+        : <></>
+    }
+    {
+      draftTimeEntry != null
+        ? <TimeEntryDialog key={`draft-${asDate(draftTimeEntry.start).getTime()}`}
+                           timeEntry={draftTimeEntry}
+                           mode={'create'}
+                           open={true}
+                           setOpen={open => {
+                             if (!open) {
+                               setDraftTimeEntry(null);
                              }
                            }}/>
         : <></>

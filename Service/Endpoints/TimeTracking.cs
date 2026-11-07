@@ -24,6 +24,8 @@ public static class TimeTracking
       .RequireAuthorization();
 
     group.MapGet("{workspaceId:long?}/", TimeTracking.GetTimeEntriesAsync);
+
+    group.MapGet("state/", TimeTracking.GetTrackingStateAsync);
     
     group.MapPost("startTracking/", TimeTracking.StartTrackingAsync);
     
@@ -76,6 +78,40 @@ public static class TimeTracking
     }
     
     return Results.Ok(await timeTrackingService.GetTimeEntriesAsync(userName, workspaceId, offset, count, from, to, activities, token));
+  }
+
+  /// <summary>
+  ///   Returns a lightweight fingerprint of the tracking state, so clients can poll for changes made by other
+  ///   clients. The fingerprint is sent as ETag, a matching If-None-Match header is answered with an empty 304.
+  /// </summary>
+  /// <param name="context"></param>
+  /// <param name="timeTrackingService"></param>
+  /// <param name="token"></param>
+  /// <returns></returns>
+  private static async Task<IResult> GetTrackingStateAsync
+  (
+    HttpContext context,
+    ITimeTrackingService timeTrackingService,
+    CancellationToken token = default
+  )
+  {
+    string? userName = context.GetUserName();
+
+    if (string.IsNullOrEmpty(userName))
+    {
+      return Results.Problem("User name cannot be null or empty.");
+    }
+
+    TrackingStateDto state = await timeTrackingService.GetTrackingStateAsync(userName, token);
+
+    string eTag = $"\"{state.Version}\"";
+
+    context.Response.Headers.ETag = eTag;
+    context.Response.Headers.CacheControl = "no-cache";
+
+    return context.Request.Headers.IfNoneMatch.Contains(eTag)
+      ? Results.StatusCode(StatusCodes.Status304NotModified)
+      : Results.Ok(state);
   }
 
   /// <summary>
