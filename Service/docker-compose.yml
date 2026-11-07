@@ -1,8 +1,0 @@
-services:
-  timetracking.service:
-    image: timetracking.service
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3200:3200"

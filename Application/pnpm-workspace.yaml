@@ -1,2 +1,2 @@
-minimumReleaseAgeExclude:
-  - pnpm@11.22.0
+allowBuilds:
+  '@parcel/watcher': true
