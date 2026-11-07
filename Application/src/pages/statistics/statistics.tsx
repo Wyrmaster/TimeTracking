@@ -1,20 +1,30 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import classes from './statistics.module.scss';
 import {
   Box,
   Button,
-  Checkbox,
+  ButtonGroup,
+  Combobox,
   Field,
   Flex,
   For,
   HStack,
+  IconButton,
   Input,
+  Pagination,
+  Portal,
+  Spinner,
   Table,
-  TableCaption,
   Text,
+  useFilter,
+  useListCollection,
   Wrap,
 } from '@chakra-ui/react';
-import {LuDownload} from 'react-icons/lu';
+import {
+  LuChevronLeft,
+  LuChevronRight,
+  LuDownload,
+} from 'react-icons/lu';
 import type {IStatisticsDto} from '../../network/intents/statistics/statisticsDto.ts';
 import {useApi} from '../../providers/apiProvider.tsx';
 import {useActivity} from '../../providers/activityProvider.tsx';
@@ -32,11 +42,17 @@ import {DonutChart, type IDonutSegment} from '../../components/donutChart.tsx';
 import {WorkspaceSelect} from '../../components/workspaceSelect.tsx';
 import {IntToHex} from '../../common/transformer.ts';
 import {toaster} from '../../components/ui/toaster.tsx';
+import {settings} from '../../common/settings.ts';
 
 /**
  * Ticks of a single hour, the unit the durations of the statistics are reported in
  */
 const TICKS_PER_HOUR: number = 36_000_000_000;
+
+/**
+ * Amount of time entries shown per page of the table
+ */
+const PAGE_SIZE: number = 25;
 
 /**
  * Converts a duration in ticks into a formatted string in the format "HHh MMm".
@@ -81,6 +97,63 @@ const fromDateInput = (value: string, endOfDay: boolean = false): Date|null => {
 };
 
 /**
+ * Predefined date ranges the statistics can be filtered by
+ */
+type DatePreset = 'This week' | 'Last week' | 'This month' | 'Last month' | 'This year';
+
+const DATE_PRESETS: DatePreset[] = [
+  'This week',
+  'Last week',
+  'This month',
+  'Last month',
+  'This year',
+];
+
+/**
+ * Resolves the first and the last day of a predefined date range, relative to today.
+ *
+ * Weeks start at the first day of the week configured in the settings.
+ *
+ * @param preset The predefined date range.
+ */
+const getPresetRange = (preset: DatePreset): {start: Date, end: Date} => {
+  const today: Date = new Date();
+  const year: number = today.getFullYear();
+  const month: number = today.getMonth();
+
+  const daysSinceWeekStart: number = (today.getDay() - settings.GetFirstDayOfTheWeek() + 7) % 7;
+  const weekStart: Date = new Date(year, month, today.getDate() - daysSinceWeekStart);
+
+  switch (preset) {
+    case 'This week':
+      return {
+        start: weekStart,
+        end: new Date(year, month, weekStart.getDate() + 6),
+      };
+    case 'Last week':
+      return {
+        start: new Date(year, month, weekStart.getDate() - 7),
+        end: new Date(year, month, weekStart.getDate() - 1),
+      };
+    case 'This month':
+      return {
+        start: new Date(year, month, 1),
+        end: new Date(year, month + 1, 0),
+      };
+    case 'Last month':
+      return {
+        start: new Date(year, month - 1, 1),
+        end: new Date(year, month, 0),
+      };
+    case 'This year':
+      return {
+        start: new Date(year, 0, 1),
+        end: new Date(year, 11, 31),
+      };
+  }
+};
+
+/**
  * Hands the given file to the browser to be saved.
  * @param file The file to save.
  * @param fileName The name the file is saved with.
@@ -113,19 +186,27 @@ export const Statistics = () => {
 
   const [activities, setActivities] = useState<ITimeEntryDto[]>([]);
 
-  const statisticEntryMap = useRef<{[key:string]: ITimeEntryDto[]}>({});
-  const [timeEntries, setTimeEntries] = useState<ITimeEntryDto[]>([]);
+  const [allTimeEntries, setAllTimeEntries] = useState<ITimeEntryDto[]>([]);
+  const [selectedActivityName, setSelectedActivityName] = useState<string|null>(null);
+  const [loadCount, setLoadCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
 
   const [prevWorkspaces, setPrevWorkspaces] = useState<IWorkspaceDto[]>(workspaces);
   const [selectedWorkspace, setSelectedWorkspace] = useState<IWorkspaceDto|null>(findActive(workspaces));
   const [workspaceActivities, setWorkspaceActivities] = useState<IActivityDto[]>([]);
-  const [excludedActivityIds, setExcludedActivityIds] = useState<number[]>([]);
-  const [startDate, setStartDate] = useState<string>(() => {
-    const today: Date = new Date();
-    return toDateInput(new Date(today.getFullYear(), today.getMonth(), 1));
-  });
+  const [loadingActivities, setLoadingActivities] = useState<boolean>(false);
+  const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
+  const [startDate, setStartDate] = useState<string>(() => toDateInput(getPresetRange('This month').start));
   const [endDate, setEndDate] = useState<string>(toDateInput(new Date()));
   const [exporting, setExporting] = useState<StatisticsExportType|null>(null);
+
+  const {contains} = useFilter({sensitivity: 'base'});
+  const {collection, filter: filterActivities, set: setActivityItems} = useListCollection<IActivityDto>({
+    initialItems: [],
+    itemToString: activity => activity.name,
+    itemToValue: activity => activity.id.toString(),
+    filter: contains,
+  });
 
   if (workspaces !== prevWorkspaces) {
     setPrevWorkspaces(workspaces);
@@ -137,13 +218,22 @@ export const Statistics = () => {
       workspaceId: selectedWorkspace?.id ?? null,
       startDate: fromDateInput(startDate),
       endDate: fromDateInput(endDate, true),
-      activityIdsToExclude: excludedActivityIds,
+      // no selection shows all activities, otherwise everything that is not selected is excluded
+      activityIdsToExclude: selectedActivityIds.length == 0
+        ? []
+        : workspaceActivities
+          .map(activity => activity.id)
+          .filter(id => !selectedActivityIds.includes(id)),
     }),
-    [selectedWorkspace, startDate, endDate, excludedActivityIds]
+    [selectedWorkspace, startDate, endDate, selectedActivityIds, workspaceActivities]
   );
 
   useEffect(() => {
-    loadActivities(selectedWorkspace?.id ?? null).then(setWorkspaceActivities);
+    loadActivities(selectedWorkspace?.id ?? null, setLoadingActivities)
+      .then(loadedActivities => {
+        setWorkspaceActivities(loadedActivities);
+        setActivityItems(loadedActivities);
+      });
   }, [selectedWorkspace]);
 
   useEffect(() => {
@@ -156,25 +246,14 @@ export const Statistics = () => {
 
         const statistics: IStatisticsDto = res.response;
 
-        statisticEntryMap.current = statistics.timeEntries.reduce((acc: {[key:string]: ITimeEntryDto[]}, curr) => {
-          acc[curr.activityName] = [...(acc[curr.activityName] ? acc[curr.activityName] : []), curr];
-          return acc;
-        }, {});
-
         setActivities(statistics.statistics);
-        setTimeEntries([]);
+        setAllTimeEntries(statistics.timeEntries);
+        setSelectedActivityName(null);
+        setPage(1);
+        // remounts the chart, so its selection is cleared together with the table
+        setLoadCount(count => count + 1);
       });
   }, [filter]);
-
-  /**
-   * Includes or excludes an activity from the statistics.
-   * @param activityId The id of the activity.
-   * @param included Whether the activity should be part of the statistics.
-   */
-  const setActivityIncluded = (activityId: number, included: boolean) =>
-    setExcludedActivityIds(current => included
-      ? current.filter(id => id != activityId)
-      : [...current, activityId]);
 
   /**
    * Downloads the filtered statistics as tab separated values.
@@ -195,6 +274,27 @@ export const Statistics = () => {
     saveFile(file, `statistics-${type.toLowerCase()}-${startDate}-${endDate}.tsv`);
   };
 
+  /**
+   * Sets the date range of the filter to a predefined range.
+   * @param preset The predefined date range.
+   */
+  const applyPreset = (preset: DatePreset) => {
+    const range = getPresetRange(preset);
+
+    setStartDate(toDateInput(range.start));
+    setEndDate(toDateInput(range.end));
+  };
+
+  /**
+   * Whether the date range of the filter matches the given predefined range.
+   * @param preset The predefined date range.
+   */
+  const isPresetActive = (preset: DatePreset): boolean => {
+    const range = getPresetRange(preset);
+
+    return toDateInput(range.start) == startDate && toDateInput(range.end) == endDate;
+  };
+
   const segments: IDonutSegment[] = useMemo(
     () => activities.map((activity: ITimeEntryDto) => ({
       label: activity.activityName,
@@ -204,16 +304,36 @@ export const Statistics = () => {
     [activities]
   );
 
-  const segmentSelected = (segment?: IDonutSegment|null) =>
-    setTimeEntries(segment == null ? [] : statisticEntryMap.current[segment.label] ?? []);
+  const segmentSelected = (segment?: IDonutSegment|null) => {
+    setSelectedActivityName(segment?.label ?? null);
+    setPage(1);
+  };
+
+  /**
+   * The time entries grouped by the name of their activity.
+   */
+  const timeEntriesByActivity: {[key: string]: ITimeEntryDto[]} = useMemo(
+    () => allTimeEntries.reduce((acc: {[key: string]: ITimeEntryDto[]}, curr) => {
+      acc[curr.activityName] = [...(acc[curr.activityName] ?? []), curr];
+      return acc;
+    }, {}),
+    [allTimeEntries]
+  );
+
+  const shownTimeEntries: ITimeEntryDto[] = selectedActivityName == null
+    ? allTimeEntries
+    : timeEntriesByActivity[selectedActivityName] ?? [];
+
+  const pagedTimeEntries: ITimeEntryDto[] = shownTimeEntries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return <>
     <Flex direction={'column'}
           align={'stretch'}
           gap={'6'}
           flexGrow={'1'}
+          minHeight={'0'}
           padding={'6'}
-          overflowY={'hidden'}
+          overflowY={'auto'}
           className={classes.statistics}>
 
       <Flex direction={'column'}
@@ -221,106 +341,185 @@ export const Statistics = () => {
             flexShrink={'0'}>
         <Wrap gap={'4'}
               align={'end'}>
-          <WorkspaceSelect workspaces={workspaces}
-                           onChange={workspace => {
-                             setSelectedWorkspace(workspace);
-                             setExcludedActivityIds([]);
-                           }}/>
-          <Field.Root width={'auto'}
-                      padding={'1.25em 0'}>
+          <Box width={'14rem'}>
+            <WorkspaceSelect workspaces={workspaces}
+                             padding={'0'}
+                             onChange={workspace => {
+                               setSelectedWorkspace(workspace);
+                               setSelectedActivityIds([]);
+                             }}/>
+          </Box>
+          <Field.Root width={'auto'}>
             <Field.Label>From</Field.Label>
             <Input type={'date'}
                    value={startDate}
                    max={endDate}
                    onChange={event => setStartDate(event.target.value)}/>
           </Field.Root>
-          <Field.Root width={'auto'}
-                      padding={'1.25em 0'}>
+          <Field.Root width={'auto'}>
             <Field.Label>To</Field.Label>
             <Input type={'date'}
                    value={endDate}
                    min={startDate}
                    onChange={event => setEndDate(event.target.value)}/>
           </Field.Root>
-          <HStack padding={'1.25em 0'}>
-            <Button variant={'outline'}
-                    loading={exporting == 'Entries'}
-                    onClick={() => exportStatistics('Entries')}>
-              <LuDownload/>
-              Export entries
-            </Button>
-            <Button variant={'outline'}
-                    loading={exporting == 'Summary'}
-                    onClick={() => exportStatistics('Summary')}>
-              <LuDownload/>
-              Export summary
-            </Button>
-          </HStack>
+          <Combobox.Root collection={collection}
+                         width={'16rem'}
+                         multiple
+                         closeOnSelect={false}
+                         openOnClick
+                         value={selectedActivityIds.map(id => id.toString())}
+                         onValueChange={details => setSelectedActivityIds(details.value.map(id => parseInt(id)))}
+                         onInputValueChange={details => filterActivities(details.inputValue)}>
+            <Combobox.Label>Activities</Combobox.Label>
+            <Combobox.Control>
+              <Combobox.Input placeholder={
+                selectedActivityIds.length == 0
+                  ? 'All activities'
+                  : `${selectedActivityIds.length} selected`
+              }/>
+              <Combobox.IndicatorGroup>
+                {loadingActivities ? <Spinner size={'xs'} borderWidth={'1.5px'}/> : <Combobox.ClearTrigger/>}
+                <Combobox.Trigger/>
+              </Combobox.IndicatorGroup>
+            </Combobox.Control>
+            <Portal>
+              <Combobox.Positioner>
+                <Combobox.Content>
+                  <Combobox.Empty>No activities found</Combobox.Empty>
+                  {collection.items.map(activity => (
+                    <Combobox.Item item={activity}
+                                   key={activity.id}>
+                      <HStack gap={'0.5em'}>
+                        <Box boxSize={'0.75em'}
+                             rounded={'full'}
+                             bg={IntToHex(activity.activityColor)}/>
+                        <Combobox.ItemText>{activity.name}</Combobox.ItemText>
+                      </HStack>
+                      <Combobox.ItemIndicator/>
+                    </Combobox.Item>
+                  ))}
+                </Combobox.Content>
+              </Combobox.Positioner>
+            </Portal>
+          </Combobox.Root>
+          <Button variant={'outline'}
+                  loading={exporting == 'Entries'}
+                  onClick={() => exportStatistics('Entries')}>
+            <LuDownload/>
+            Export entries
+          </Button>
+          <Button variant={'outline'}
+                  loading={exporting == 'Summary'}
+                  onClick={() => exportStatistics('Summary')}>
+            <LuDownload/>
+            Export summary
+          </Button>
         </Wrap>
-        <Wrap gap={'4'}>
-          <For each={workspaceActivities}>
-            {(activity) => (
-              <Checkbox.Root key={activity.id}
-                             checked={!excludedActivityIds.includes(activity.id)}
-                             onCheckedChange={details => setActivityIncluded(activity.id, details.checked === true)}>
-                <Checkbox.HiddenInput/>
-                <Checkbox.Control/>
-                <Checkbox.Label>
-                  <HStack gap={'1.5'}>
-                    <Box boxSize={'0.75em'}
-                         rounded={'full'}
-                         bg={IntToHex(activity.activityColor)}/>
-                    {activity.name}
-                  </HStack>
-                </Checkbox.Label>
-              </Checkbox.Root>
+        <Wrap gap={'2'}>
+          <For each={DATE_PRESETS}>
+            {(preset: DatePreset) => (
+              <Button key={preset}
+                      size={'xs'}
+                      variant={isPresetActive(preset) ? 'solid' : 'outline'}
+                      onClick={() => applyPreset(preset)}>
+                {preset}
+              </Button>
             )}
           </For>
         </Wrap>
       </Flex>
 
-      <DonutChart segments={segments}
-                  formatValue={formatDuration}
-                  onSegmentClick={segmentSelected}/>
+      <Flex justify={'center'}
+            flexShrink={'0'}>
+        <DonutChart key={loadCount}
+                    segments={segments}
+                    formatValue={formatDuration}
+                    onSegmentClick={segmentSelected}/>
+      </Flex>
 
       {segments.length === 0 &&
         <Text textStyle={'sm'}
+              textAlign={'center'}
               color={'fg.muted'}>
-          No tracked time yet
+          No tracked time in this range
         </Text>
       }
-      <Table.ScrollArea borderWidth={'0.125rem'}
-                        display={'flex'}
-                        flex={'1'}
-                        rounded={'md'}>
-        <Table.Root stickyHeader>
-          <TableCaption defaultValue={'Entries'}/>
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeader />
-              <Table.ColumnHeader>Start</Table.ColumnHeader>
-              <Table.ColumnHeader>End</Table.ColumnHeader>
-              <Table.ColumnHeader>Duration</Table.ColumnHeader>
-              <Table.ColumnHeader>Activity</Table.ColumnHeader>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body overflowY={'scroll'}>
-            {
-              <For each={timeEntries}>
+
+      <Flex direction={'column'}
+            gap={'2'}
+            flexShrink={'0'}>
+        <Text fontWeight={'semibold'}>
+          {selectedActivityName == null ? 'All entries' : `Entries of ${selectedActivityName}`}
+          <Text as={'span'}
+                color={'fg.muted'}
+                fontWeight={'normal'}>
+            {` (${shownTimeEntries.length})`}
+          </Text>
+        </Text>
+        <Table.ScrollArea borderWidth={'1px'}
+                          minHeight={'20rem'}
+                          maxHeight={'60vh'}
+                          rounded={'md'}>
+          <Table.Root size={'sm'}
+                      stickyHeader>
+            <Table.Header>
+              <Table.Row bg={'bg.subtle'}>
+                <Table.ColumnHeader width={'2rem'}/>
+                <Table.ColumnHeader>Activity</Table.ColumnHeader>
+                <Table.ColumnHeader>Start</Table.ColumnHeader>
+                <Table.ColumnHeader>End</Table.ColumnHeader>
+                <Table.ColumnHeader textAlign={'end'}>Duration</Table.ColumnHeader>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              <For each={pagedTimeEntries}>
                 {
                   (item, index) => <Table.Row key={index}>
-                    <Table.Cell>{item.color}</Table.Cell>
-                    <Table.Cell>{item.start?.toString()}</Table.Cell>
-                    <Table.Cell>{item.end?.toString()}</Table.Cell>
-                    <Table.Cell>{formatDuration(item.duration)}</Table.Cell>
+                    <Table.Cell>
+                      <Box boxSize={'0.75em'}
+                           rounded={'full'}
+                           bg={IntToHex(item.color)}/>
+                    </Table.Cell>
                     <Table.Cell>{item.activityName}</Table.Cell>
+                    <Table.Cell>{item.start == null ? '' : new Date(item.start).toLocaleString()}</Table.Cell>
+                    <Table.Cell>{item.end == null ? '' : new Date(item.end).toLocaleString()}</Table.Cell>
+                    <Table.Cell textAlign={'end'}>{formatDuration(item.duration)}</Table.Cell>
                   </Table.Row>
                 }
               </For>
-            }
-          </Table.Body>
-        </Table.Root>
-      </Table.ScrollArea>
+            </Table.Body>
+          </Table.Root>
+        </Table.ScrollArea>
+        {
+          shownTimeEntries.length > PAGE_SIZE
+            ? <Pagination.Root count={shownTimeEntries.length}
+                               pageSize={PAGE_SIZE}
+                               page={page}
+                               onPageChange={details => setPage(details.page)}
+                               alignSelf={'center'}>
+                <ButtonGroup variant={'ghost'}
+                             size={'sm'}>
+                  <Pagination.PrevTrigger asChild>
+                    <IconButton aria-label={'Previous page'}>
+                      <LuChevronLeft/>
+                    </IconButton>
+                  </Pagination.PrevTrigger>
+                  <Pagination.Items render={item => (
+                    <IconButton variant={{base: 'ghost', _selected: 'outline'}}>
+                      {item.value}
+                    </IconButton>
+                  )}/>
+                  <Pagination.NextTrigger asChild>
+                    <IconButton aria-label={'Next page'}>
+                      <LuChevronRight/>
+                    </IconButton>
+                  </Pagination.NextTrigger>
+                </ButtonGroup>
+              </Pagination.Root>
+            : <></>
+        }
+      </Flex>
     </Flex>
   </>;
 };

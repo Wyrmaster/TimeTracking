@@ -5,12 +5,14 @@ import {createListCollection, For, Portal, Select} from '@chakra-ui/react';
 interface IProps {
   workspaces: IWorkspaceDto[];
   onChange: (workspace: IWorkspaceDto) => void;
+  padding?: string;
 }
 
 export const WorkspaceSelect = (
   {
     workspaces,
     onChange,
+    padding = '1.25em',
   }: IProps) => {
 
   const collection = useMemo(
@@ -40,7 +42,7 @@ export const WorkspaceSelect = (
 
   return <>
     <Select.Root collection={collection}
-                 padding={'1.25em'}
+                 padding={padding}
                  value={selectedWorkspaceId ? [selectedWorkspaceId] : []}
                  onValueChange={details => localOnChange(details.value[0])}>
       <Select.HiddenSelect />
