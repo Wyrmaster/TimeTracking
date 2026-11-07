@@ -17,7 +17,7 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "uuid-ossp");
@@ -107,8 +107,8 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("password");
 
                     b.Property<string>("Username")
@@ -120,6 +120,9 @@ namespace TimeTracking.Persistence.Postgresql.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ActiveWorkspaceId")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
                         .IsUnique();
 
                     b.ToTable("users", "tt");

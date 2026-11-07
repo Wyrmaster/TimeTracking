@@ -22,7 +22,7 @@ export class StartTrackingIntent extends BodyIntent<void, ITrackingDto>{
   // region Constructor
 
   constructor(activityId: number, description: string) {
-    super({activityId, description}, `/api/v1/timetracking/startTracking/`, HttpMethod.POST);
+    super({activityId, description}, '/api/v1/timetracking/startTracking/', HttpMethod.POST);
   }
 
 

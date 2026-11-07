@@ -1,4 +1,4 @@
-import {useActivity} from '../providers/activityProvider.tsx';
+import {useActiveActivity, useStartTracking, useStopTracking} from '../queries/tracking.ts';
 import {Box, Flex, Text, Spinner, IconButton} from '@chakra-ui/react';
 import type {IActivityDto} from '../network/intents/activities/activityDto.ts';
 import {IntToHex} from '../common/transformer.ts';
@@ -25,7 +25,11 @@ export const Activity = (
     edit = () => {},
   }: IProps) => {
 
-  const {activeActivity, startTracking, stopTracking} = useActivity();
+  const {data: activeActivity} = useActiveActivity();
+  const startTracking = useStartTracking();
+  const stopTracking = useStopTracking();
+
+  const isTracked: boolean = activeActivity != null && activeActivity.id == activity.id;
 
   return <>
     <Box padding={'1.25em'}
@@ -47,21 +51,23 @@ export const Activity = (
             {activity.name}
           </Text>
           {
-            activeActivity != null && activeActivity.id == activity.id
+            isTracked
               ? <Spinner color={'white'}/>
               : <></>
           }
           {
             canTrack
-              ? activeActivity != null && activeActivity.id == activity.id
-                ? <IconButton onClick={() => stopTracking()}
+              ? isTracked
+                ? <IconButton onClick={() => stopTracking.mutate()}
+                              loading={stopTracking.isPending}
                               size={'sm'}
                               color={'white'}
                               variant={'ghost'}
                               rounded={'full'}>
                     <FaPause />
                   </IconButton>
-                : <IconButton onClick={() => startTracking(activity.id)}
+                : <IconButton onClick={() => startTracking.mutate(activity.id)}
+                              loading={startTracking.isPending}
                               size={'sm'}
                               color={'white'}
                               variant={'ghost'}
@@ -78,9 +84,9 @@ export const Activity = (
             : <></>
         }
         {
-          activeActivity != null && activeActivity.id == activity.id
+          isTracked
             ? <Text color={'white'}>
-                <Timer timestamp={new Date(activeActivity.trackingSince)}/>
+                <Timer timestamp={activeActivity!.trackingSince}/>
               </Text>
             : <></>
         }
@@ -95,7 +101,7 @@ export const Activity = (
                         opacity={0}
                         color={'white'}
                         _hover={ {opacity: 1} }
-                        transition="opacity 0.2s"
+                        transition='opacity 0.2s'
                         variant={'subtle'}
                         rounded={'full'}>
               <MdModeEdit/>

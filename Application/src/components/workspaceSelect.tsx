@@ -20,7 +20,7 @@ export const WorkspaceSelect = (
       createListCollection({
         items: workspaces.map(entry => ({label: entry.name, value: entry.id.toString()})),
       }),
-    [workspaces]
+    [workspaces],
   );
 
   const [prevWorkspaces, setPrevWorkspaces] = useState<IWorkspaceDto[]>(workspaces);
@@ -51,7 +51,7 @@ export const WorkspaceSelect = (
 
       <Select.Control>
         <Select.Trigger>
-          <Select.ValueText placeholder="Select a workspace" />
+          <Select.ValueText placeholder='Select a workspace' />
         </Select.Trigger>
         <Select.IndicatorGroup>
           <Select.Indicator />

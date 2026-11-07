@@ -16,9 +16,13 @@ Take control of your time with an intuitive, self-hosted time tracking solution.
 
 ## 🚀 Quick Start
 
-Get up and running in minutes with Docker Compose:
+Get up and running in minutes with Docker Compose. The secret signing the login tokens is read from a `.env` file
+next to the compose file, which is ignored by git:
 
 ```shell script
+cp .env.example .env
+# fill in TOKEN_SECRET, e.g. with the output of: openssl rand -hex 64
+
 docker-compose up
 
 # for the more adventures
@@ -39,6 +43,12 @@ This application uses JWT tokens for secure authentication. Configure the follow
 | `Token__Issuer` | Token issuer |
 | `Token__Audience` | Token audience |
 | `Token__SecretVariableName` | Variable name containing your secret (allows non-plaintext injection) |
+
+The secret itself is never part of the repository. During development store it as user secret:
+
+```shell script
+dotnet user-secrets set TokenSecret "$(openssl rand -hex 64)" --project Service/Library
+```
 
 ---
 

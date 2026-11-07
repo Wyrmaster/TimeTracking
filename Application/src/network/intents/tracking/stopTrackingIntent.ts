@@ -23,7 +23,7 @@ export class StopTrackingIntent extends Intent<void>{
   // region Constructor
 
   constructor() {
-    super(`/api/v1/timetracking/stopTracking/`, HttpMethod.POST);
+    super('/api/v1/timetracking/stopTracking/', HttpMethod.POST);
   }
 
   // endregion

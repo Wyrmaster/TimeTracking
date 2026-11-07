@@ -18,8 +18,6 @@ public class UserConfiguration: BaseEntityConfiguration<User>
       .ToTable("users", "tt");
     
     // Relations Properties
-
-    const string activeWorkspaceId = "";
     builder
       .HasOne(entity => entity.ActiveWorkspace)
       .WithOne(entity => entity.ActiveWorkspaceUser)
@@ -38,11 +36,15 @@ public class UserConfiguration: BaseEntityConfiguration<User>
       .HasColumnName("username")
       .HasMaxLength(64)
       .IsRequired();
+
+    builder
+      .HasIndex(entity => entity.Username)
+      .IsUnique();
     
     builder
       .Property(entity => entity.Password)
       .HasColumnName("password")
-      .HasMaxLength(64)
+      .HasMaxLength(256)
       .IsRequired();
     
     builder

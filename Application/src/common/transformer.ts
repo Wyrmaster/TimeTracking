@@ -10,8 +10,14 @@ const HexToInt = (hex: string): number =>
  * @param int Integer representation of a color.
  * @constructor
  */
-const IntToHex = (int: number): string =>
-  `#${int.toString(16).padStart(6, '0').toUpperCase()}`;
+const IntToHex = (int: number): string => {
+  const hex: string = int
+    .toString(16)
+    .padStart(6, '0')
+    .toUpperCase();
+
+  return `#${hex}`;
+};
 
 /**
  * Determines a readable text color for content placed on top of the given color.
@@ -31,5 +37,5 @@ const IntToTextColor = (int: number): string => {
 export {
   HexToInt,
   IntToHex,
-  IntToTextColor
+  IntToTextColor,
 };

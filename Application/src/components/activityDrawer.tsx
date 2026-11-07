@@ -2,7 +2,7 @@ import {Button, CloseButton, Drawer, Field, For, Input, Portal, Textarea, ColorS
 import type {IActivityDto} from '../network/intents/activities/activityDto.ts';
 import {useState} from 'react';
 import {HexToInt, IntToHex} from '../common/transformer.ts';
-import {useActivity} from '../providers/activityProvider.tsx';
+import {useAddActivity, useUpdateActivity} from '../queries/activities.ts';
 
 interface IProps {
   activity: IActivityDto|null;
@@ -26,28 +26,29 @@ export const ActivityDrawer = ({
   const [color, setColor] = useState<string>(
     activity == null
       ? colors[0]
-      : IntToHex(activity.activityColor)
+      : IntToHex(activity.activityColor),
   );
 
-  const { addActivity, updateActivity} = useActivity();
+  const addActivity = useAddActivity();
+  const updateActivity = useUpdateActivity();
 
   /**
    * Persists the activity and closes the drawer once it was saved.
    */
-  const save = async () => {
+  const save = () => {
     const dto = {
       id: activity?.id,
       name,
       description,
       activityColor: HexToInt(color),
     } as IActivityDto;
+    const close = {onSuccess: () => setOpen(false)};
 
-    const saved: boolean = activity == null
-      ? await addActivity(dto, workspaceId)
-      : await updateActivity(dto, workspaceId);
-
-    if (saved) {
-      setOpen(false);
+    if (activity == null) {
+      addActivity.mutate({activity: dto, workspaceId}, close);
+    }
+    else {
+      updateActivity.mutate(dto, close);
     }
   };
 
@@ -71,7 +72,7 @@ export const ActivityDrawer = ({
                                fontWeight={'bold'}>
                     Activity Name
                   </Field.Label>
-                  <Input placeholder="Enter the Activity Name"
+                  <Input placeholder='Enter the Activity Name'
                          defaultValue={name}
                          onChange={(e) => setName(e.target.value)}
                   />
@@ -111,7 +112,8 @@ export const ActivityDrawer = ({
                       onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={save}>
+              <Button loading={addActivity.isPending || updateActivity.isPending}
+                      onClick={save}>
                 Save
               </Button>
             </Drawer.Footer>

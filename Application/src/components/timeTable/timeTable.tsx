@@ -4,7 +4,6 @@ import {Box, Flex, For, Table, Text} from '@chakra-ui/react';
 import type {DateValue} from '@internationalized/date';
 import type {ITimeEntryDto} from '../../network/intents/timeEntry/timeEntryDto.ts';
 import {
-  asDate,
   formatMinutes,
   getHoursOfDay,
   getMinutesOfDay,
@@ -16,15 +15,10 @@ import {
   MINUTES_PER_QUARTER,
   QUARTERS_PER_HOUR,
   splitTimeEntries,
-  type ITimeEntrySegment
+  type ITimeEntrySegment,
 } from '../../common/timeGrid.ts';
 import {IntToHex, IntToTextColor} from '../../common/transformer.ts';
 import {TimeEntryDialog} from '../timeEntryDialog.tsx';
-
-/**
- * AI GENERATED
- */
-
 
 // region Constants
 
@@ -310,7 +304,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
 
     scrollArea.scrollTop = Math.max(
       0,
-      ((getMinutesOfDay(new Date()) - MINUTES_PER_HOUR) / MINUTES_PER_DAY) * scrollArea.scrollHeight
+      ((getMinutesOfDay(new Date()) - MINUTES_PER_HOUR) / MINUTES_PER_DAY) * scrollArea.scrollHeight,
     );
   }, []);
 
@@ -500,7 +494,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
     }
     {
       draftTimeEntry != null
-        ? <TimeEntryDialog key={`draft-${asDate(draftTimeEntry.start).getTime()}`}
+        ? <TimeEntryDialog key={`draft-${draftTimeEntry.start.getTime()}`}
                            timeEntry={draftTimeEntry}
                            mode={'create'}
                            open={true}

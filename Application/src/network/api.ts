@@ -1,7 +1,28 @@
 import {Intent} from './intent.ts';
 import {BodyIntent} from './bodyIntent.ts';
 import type {IResponse} from './response.ts';
+import {ApiError} from './apiError.ts';
 import {settings} from '../common/settings.ts';
+
+/**
+ * Timestamps sent by the api, converted into dates while parsing a response
+ */
+const ISO_TIMESTAMP: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Converts the timestamps of a parsed response into dates, so the dtos can declare them as `Date`.
+ * @param _ key of the parsed value
+ * @param value the parsed value
+ */
+const reviveDates = (_: string, value: unknown): unknown =>
+  typeof value == 'string' && ISO_TIMESTAMP.test(value) ? new Date(value) : value;
+
+/**
+ * Whether an intent sends a body
+ * @param intent the intent to check
+ */
+const hasBody = <T, >(intent: Intent<T>): intent is BodyIntent<T, unknown> =>
+  intent instanceof BodyIntent;
 
 /**
  * class used to communicate with an endpoint
@@ -21,7 +42,7 @@ class Api {
   constructor(unauthorizedCallback: () => void) {
     this._unauthorizedCallback = unauthorizedCallback;
     this._endPoint = window.location.origin.replace(/\/*$/, '');
-    this._token = settings.GetToken();
+    this._token = settings.getToken();
   }
 
   // endregion
@@ -29,112 +50,108 @@ class Api {
   // region Methods
 
   /**
-   * Sends a Http Request to the endpoint
-   * @param intent describing an a route and its parameter
-   * @constructor
+   * Sends a Http Request to the endpoint, failures are reported by the status code of the response
+   * @param intent describing a route and its parameter
    */
-  public SendAsync = async <T>(intent: Intent<T>): Promise<IResponse<T>> => {
-    const responseDto: IResponse<T> = {code: 0, response: null};
-
+  public sendAsync = async <T, >(intent: Intent<T>): Promise<IResponse<T>> => {
     try {
-      const response: Response = await fetch(`${this._endPoint}${intent.GetRoute()}`, {
-        method: intent.GetMethod(),
-        // conditional requests are handled by the intents themselves, the browser cache must not answer them
-        cache: 'no-store',
-        headers: this._token == null
-          ? {
-              'Content-Type': 'application/json',
-              ...intent.GetHeaders(),
-            }
-          : {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this._token}`,
-              ...intent.GetHeaders(),
-            },
-        body: (intent as unknown as BodyIntent<never, T>)?.GetBody == undefined
-          ? null
-          : JSON.stringify((intent as unknown as BodyIntent<never, T>).GetBody()),
+      const response: Response = await this.fetchAsync(intent, {
+        'Content-Type': 'application/json',
       });
-      if (response.status == 401) {
-        this._unauthorizedCallback();
-        responseDto.code = 401;
-        return responseDto;
-      }
-      if (response.status == 402) {
-        this._unauthorizedCallback();
-        responseDto.code = 402;
-        return responseDto;
-      }
-      responseDto.response = await this.readBodyAsync(response);
-      responseDto.code = response.status;
-      responseDto.etag = response.headers.get('ETag');
+
+      return {
+        code: response.status,
+        response: await this.readBodyAsync<T>(response),
+        etag: response.headers.get('ETag'),
+      };
     }
-    catch(err) {
-      console.error(err);
-      responseDto.code = 500
+    catch (error) {
+      console.error(error);
+      return {code: 0, response: null};
+    }
+  };
+
+  /**
+   * Sends a Http Request to the endpoint and returns the body of a successful response
+   * @param intent describing a route and its parameter
+   * @throws ApiError when the request fails or is answered with an error status
+   */
+  public requestAsync = async <T, >(intent: Intent<T>): Promise<T> => {
+    const response: IResponse<T> = await this.sendAsync(intent);
+
+    if (response.code < 200 || response.code >= 300) {
+      throw new ApiError(response.code, intent.getRoute());
     }
 
-    if (intent.GetCallback() != null)
-    {
-      (intent.GetCallback() as ((response: IResponse<T>) => void|Promise<void>))(responseDto);
-    }
-
-    return responseDto;
+    return response.response as T;
   };
 
   /**
    * Sends a Http Request to the endpoint and returns the body of the response as file
-   * @param intent describing an a route and its parameter
-   * @returns the received file, null if the request failed
+   * @param intent describing a route and its parameter
+   * @throws ApiError when the request fails or is answered with an error status
    */
-  public DownloadAsync = async (intent: Intent<Blob>): Promise<Blob|null> => {
-    try {
-      const response: Response = await fetch(`${this._endPoint}${intent.GetRoute()}`, {
-        method: intent.GetMethod(),
-        headers: this._token == null
-          ? {}
-          : {'Authorization': `Bearer ${this._token}`},
-      });
+  public downloadAsync = async (intent: Intent<Blob>): Promise<Blob> => {
+    const response: Response = await this.fetchAsync(intent, {});
 
-      if (response.status == 401 || response.status == 402) {
-        this._unauthorizedCallback();
-        return null;
-      }
+    if (!response.ok) {
+      throw new ApiError(response.status, intent.getRoute());
+    }
 
-      return response.ok ? await response.blob() : null;
-    }
-    catch (err) {
-      console.error(err);
-      return null;
-    }
+    return await response.blob();
   };
 
-  public SetToken = (token: string) => {
-    // an empty token signs the user out, no authorization header is sent anymore
+  /**
+   * Sets the token used to authenticate the requests, an empty token signs the user out
+   * @param token the bearer token
+   */
+  public setToken = (token: string) => {
     this._token = token == '' ? null : token;
-    settings.SetToken(token);
-  }
+    settings.setToken(token);
+  };
 
   // endregion
 
   // region Private Methods
 
   /**
+   * Sends the request described by an intent, unauthorized responses sign the user out
+   * @param intent describing a route and its parameter
+   * @param headers headers sent in addition to the authorization and the headers of the intent
+   */
+  private fetchAsync = async <T, >(intent: Intent<T>, headers: Record<string, string>): Promise<Response> => {
+    const response: Response = await fetch(`${this._endPoint}${intent.getRoute()}`, {
+      method: intent.getMethod(),
+      // conditional requests are handled by the intents themselves, the browser cache must not answer them
+      cache: 'no-store',
+      headers: {
+        ...headers,
+        ...(this._token == null ? {} : {'Authorization': `Bearer ${this._token}`}),
+        ...intent.getHeaders(),
+      },
+      body: hasBody(intent) ? JSON.stringify(intent.getBody()) : null,
+    });
+
+    if (response.status == 401 || response.status == 402) {
+      this._unauthorizedCallback();
+    }
+
+    return response;
+  };
+
+  /**
    * Reads and deserializes the body of a response, if it has one
    * @param response the response returned by fetch
    */
-  private readBodyAsync = async <T>(response: Response): Promise<T|null> => {
-
+  private readBodyAsync = async <T, >(response: Response): Promise<T|null> => {
     // 204 No Content, 205 Reset Content and 304 Not Modified never carry a body
     if (response.status == 204 || response.status == 205 || response.status == 304) {
       return null;
     }
-    if (response.body == null || response.headers.get('Content-Length') == '0') {
-      return null;
-    }
 
     const text: string = await response.text();
-    return text.length == 0 ? null : JSON.parse(text) as T;
+
+    return text.length == 0 ? null : JSON.parse(text, reviveDates) as T;
   };
 
   // endregion
@@ -144,5 +161,5 @@ const apiFactory = (unauthorizedCallback: () => void): Api => new Api(unauthoriz
 
 export {
   apiFactory,
-  type Api
-}
+  type Api,
+};

@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TimeTracking.Persistence.Entities;
 using TimeTracking.Persistence.Entities.Abstract;
-using TimeTracking.Persistence.PseudoEntities;
 
 namespace TimeTracking.Persistence.Postgresql;
 
@@ -20,39 +19,6 @@ public class PostgresqlContext: Context
   #endregion
 
   #region Overrides
-
-  /// <inheritdoc/>
-  public override async Task<ActivityTracking> UpdateSideAsync(string username, int sideId, CancellationToken cancellationToken = default) =>
-    await this
-      .Database
-      .SqlQuery<ActivityTracking>($"SELECT * FROM update_dice_side_selection ({sideId}, {username}) AS t")
-      .SingleAsync(cancellationToken);
-
-  /// <inheritdoc/>
-  public override Task<ActivityTracking> UpdateActiveWorkspace(long workspaceId, string username, CancellationToken cancellationToken = default)
-    => this
-        .Database
-        .SqlQuery<ActivityTracking>($"SELECT * FROM update_active_workspace({workspaceId}, {username});")
-        .AsEnumerable()
-        .ToAsyncEnumerable()
-        .SingleAsync(cancellationToken)
-        .AsTask()
-  ;
-
-  /// <inheritdoc/>
-  public override Task StopTrackingAsync(string username, CancellationToken cancellationToken = default)
-    => this.Database.ExecuteSqlInterpolatedAsync($"CALL stop_tracking({username});", cancellationToken);
-
-  /// <inheritdoc/>
-  public override Task<ActivityTracking> StartTrackingAsync(string username, long activityId, string description = "", CancellationToken cancellationToken = default)
-    => this
-        .Database
-        .SqlQuery<ActivityTracking>($"SELECT * FROM start_tracking({username}, {activityId}, {description});")
-        .AsEnumerable()
-        .ToAsyncEnumerable()
-        .SingleAsync(cancellationToken)
-        .AsTask()
-  ;
 
   /// <inheritdoc/>
   protected override void OnModelCreating(ModelBuilder modelBuilder)

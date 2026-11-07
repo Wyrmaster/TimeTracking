@@ -1,11 +1,10 @@
-import './App.css'
 import {Navigate, Route, Routes} from 'react-router-dom';
 import {rts} from './common/routes.ts';
 import {settings} from './common/settings.ts';
 import {Authentication} from './pages/authentication/authentication.tsx';
 import {Register} from './pages/register/register.tsx';
 import {Home} from './pages/home/home.tsx';
-import Activities from './pages/activities/activities.tsx';
+import {Activities} from './pages/activities/activities.tsx';
 import {Workspaces} from './pages/workspaces/workspaces.tsx';
 import {Statistics} from './pages/statistics/statistics.tsx';
 import {Overview} from './pages/overview/overview.tsx';
@@ -15,9 +14,9 @@ const App = () => {
   return (
     <>
       <Routes>
-        <Route path="/"
+        <Route path='/'
                element={
-                 settings.GetToken() == null
+                 settings.getToken() == null
                    ? <Navigate to={rts.Authentication}/>
                    : <Navigate to={rts.Home}/>
                }

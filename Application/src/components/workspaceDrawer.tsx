@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {IWorkspaceDto} from '../network/intents/workspace/workspaceDto.ts';
 import {Button, Drawer, Field, Input, Textarea, VStack} from '@chakra-ui/react';
 import * as React from 'react';
-import {useWorkspace} from '../providers/workspaceProvider.tsx';
+import {useAddWorkspace, useUpdateWorkspace} from '../queries/workspaces.ts';
 
 interface IProps {
   workspace: IWorkspaceDto|null;
@@ -17,7 +17,26 @@ export const WorkspaceDrawer = (
     setOpen,
   }: IProps) => {
 
-  const {addWorkspace, updateWorkspace} = useWorkspace();
+  const addWorkspace = useAddWorkspace();
+  const updateWorkspace = useUpdateWorkspace();
+
+  /**
+   * Persists the workspace and closes the drawer once it was saved.
+   */
+  const save = () => {
+    const close = {onSuccess: () => setOpen(false)};
+
+    if (workspace == null) {
+      addWorkspace.mutate({name, description} as IWorkspaceDto, close);
+    }
+    else {
+      updateWorkspace.mutate({
+        id: workspace.id,
+        name,
+        description,
+      } as IWorkspaceDto, close);
+    }
+  };
 
   const [name, setName] = useState<string>(workspace?.name ?? '');
   const [description, setDescription] = useState<string>(workspace?.description ?? '');
@@ -50,9 +69,8 @@ export const WorkspaceDrawer = (
                     onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => workspace == null
-              ? addWorkspace({name, description} as IWorkspaceDto)
-              : updateWorkspace({id: workspace.id,name, description} as IWorkspaceDto)}>
+            <Button loading={addWorkspace.isPending || updateWorkspace.isPending}
+                    onClick={save}>
               Save
             </Button>
           </Drawer.Footer>

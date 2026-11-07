@@ -1,14 +1,14 @@
-﻿# --- Stage 1: Build React Frontend with npm ---
-FROM node:20-alpine AS frontend-build
-COPY ["./Application", "src/Application"]
+﻿# --- Stage 1: Build React Frontend with pnpm ---
+FROM node:22-alpine AS frontend-build
 WORKDIR /src/Application
 
-# Install dependencies
-RUN npm install
+# install the dependencies first, so they are cached as long as the lockfile does not change
+COPY Application/package.json Application/pnpm-lock.yaml Application/pnpm-workspace.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
-# Copy the rest of the source and build
+# copy the rest of the source and build
 COPY Application/ ./
-RUN npm run build
+RUN pnpm run build
 
 # --- Stage 2: Base ASP.NET Image ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
@@ -22,12 +22,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY [".", "src/"]
-RUN dotnet restore "src/Service/TimeTracking.Service.csproj"
+RUN dotnet restore "src/Service/Library/TimeTracking.Service.csproj"
 
 # --- Stage 4: Publish ---
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "src/Service/TimeTracking.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Service/Library/TimeTracking.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # --- Stage 5: Final Image ---
 FROM base AS final

@@ -10,7 +10,7 @@ export class AddTimeEntryIntent extends BodyIntent<void, ITimeEntryDto>{
   // region Constructor
 
   constructor(timeEntry: ITimeEntryDto) {
-    super(timeEntry,`/api/v1/timetracking/`, HttpMethod.POST);
+    super(timeEntry,'/api/v1/timetracking/', HttpMethod.POST);
   }
 
   // endregion

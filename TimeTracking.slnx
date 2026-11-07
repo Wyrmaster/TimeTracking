@@ -10,6 +10,8 @@
     <File Path="LICENSE" />
     <File Path="README.MD" />
   </Folder>
-  <Project Path="Service/TimeTracking.Service.csproj" />
-  <Project Path="Test/TimeTracking.Service.Test.csproj" />
+  <Folder Name="/Service/">
+    <Project Path="Service/Library/TimeTracking.Service.csproj" />
+    <Project Path="Service/Test/TimeTracking.Service.Test.csproj" />
+  </Folder>
 </Solution>

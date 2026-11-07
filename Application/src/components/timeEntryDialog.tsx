@@ -13,19 +13,15 @@ import {
   Text,
   useFilter,
   useListCollection,
-  VStack
+  VStack,
 } from '@chakra-ui/react';
+import {LuTrash2} from 'react-icons/lu';
 import type {ITimeEntryDto} from '../network/intents/timeEntry/timeEntryDto.ts';
 import type {IActivityDto} from '../network/intents/activities/activityDto.ts';
-import {useActivity} from '../providers/activityProvider.tsx';
 import {IntToHex} from '../common/transformer.ts';
-import {asDate} from '../common/timeGrid.ts';
-import {LuTrash2} from 'react-icons/lu';
-
-/**
- * AI GENERATED
- */
-
+import {formatDuration, toDateTimeInput} from '../common/dateFormat.ts';
+import {useActivities} from '../queries/activities.ts';
+import {useAddTimeEntry, useRemoveTimeEntry, useUpdateTimeEntry} from '../queries/timeEntries.ts';
 
 interface IProps {
   timeEntry: ITimeEntryDto;
@@ -33,28 +29,6 @@ interface IProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
-
-/**
- * Formats a date as the value of a `datetime-local` input (`YYYY-MM-DDTHH:mm`).
- * @param date The date to format.
- */
-const toDateTimeInput = (date: Date): string =>
-  `${date.getFullYear()}`
-  + `-${(date.getMonth() + 1).toString().padStart(2, '0')}`
-  + `-${date.getDate().toString().padStart(2, '0')}`
-  + `T${date.getHours().toString().padStart(2, '0')}`
-  + `:${date.getMinutes().toString().padStart(2, '0')}`;
-
-/**
- * Formats the duration between two points in time as `HHh MMm`.
- * @param start The start of the duration.
- * @param end The end of the duration.
- */
-const formatDuration = (start: Date, end: Date): string => {
-  const minutes: number = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
-
-  return `${Math.floor(minutes / 60)}h ${(minutes % 60).toString().padStart(2, '0')}m`;
-};
 
 /**
  * Dialog used to edit the timestamps and the activity of a single time entry, or to create a
@@ -71,35 +45,37 @@ const formatDuration = (start: Date, end: Date): string => {
  * @param open Whether the dialog is currently visible.
  * @param setOpen Callback used to change the visibility of the dialog.
  */
-export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProps) => {
+export const TimeEntryDialog = ({
+timeEntry, mode = 'edit', open, setOpen,
+}: IProps) => {
 
-  const {
-    loadActivities,
-    updateTimeEntry,
-    addTimeEntry,
-    removeTimeEntry,
-  } = useActivity();
+  const {data: activities, isLoading: loading} = useActivities(null);
+  const addTimeEntry = useAddTimeEntry();
+  const updateTimeEntry = useUpdateTimeEntry();
+  const removeTimeEntry = useRemoveTimeEntry();
 
   const isCreating: boolean = mode == 'create';
+  const saving: boolean = addTimeEntry.isPending || updateTimeEntry.isPending;
+  const deleting: boolean = removeTimeEntry.isPending;
 
-  const [activities, setActivities] = useState<IActivityDto[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<boolean>(false);
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
-  const [start, setStart] = useState<string>(toDateTimeInput(asDate(timeEntry.start)));
-  const [end, setEnd] = useState<string>(timeEntry.end == null ? '' : toDateTimeInput(asDate(timeEntry.end)));
+  const [start, setStart] = useState<string>(toDateTimeInput(timeEntry.start));
+  const [end, setEnd] = useState<string>(timeEntry.end == null ? '' : toDateTimeInput(timeEntry.end));
   const [activityId, setActivityId] = useState<number|null>(timeEntry.activity?.id ?? null);
   const [description, setDescription] = useState<string>(timeEntry.description ?? '');
 
   const {contains} = useFilter({sensitivity: 'base'});
-  const {collection, filter, set} = useListCollection<IActivityDto>({
+  const {
+collection, filter, set,
+} = useListCollection<IActivityDto>({
     initialItems: [],
     itemToString: activity => activity.name,
     itemToValue: activity => activity.id.toString(),
-    filter: contains
+    filter: contains,
   });
+
+  useEffect(() => set(activities ?? []), [activities, set]);
 
   const startDate: Date = new Date(start);
   const endDate: Date|null = end.length == 0 ? null : new Date(end);
@@ -111,14 +87,12 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
   const activityMissing: boolean = isCreating && activityId == null;
 
   /**
-   * Persists the edited time entry and closes the dialog.
+   * Persists the edited time entry and closes the dialog once it was saved.
    */
   const save = async () => {
     if (startInvalid || endInvalid || activityMissing) {
       return;
     }
-
-    setSaving(true);
 
     const editedTimeEntry: ITimeEntryDto = {
       ...timeEntry,
@@ -127,48 +101,28 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
       end: endDate,
       activity: activityId == null
         ? null
-        : activities.find(activity => activity.id == activityId) ?? timeEntry.activity
+        : activities?.find(activity => activity.id == activityId) ?? timeEntry.activity,
     };
 
-    if (isCreating) {
-      await addTimeEntry(editedTimeEntry);
-    }
-    else {
-      await updateTimeEntry(editedTimeEntry);
-    }
+    const mutation = isCreating ? addTimeEntry : updateTimeEntry;
 
-    setSaving(false);
-    setOpen(false);
+    mutation.mutate(editedTimeEntry, {onSuccess: () => setOpen(false)});
   };
 
   /**
    * Removes the time entry and closes the dialog. The first click only asks for a confirmation.
    */
-  const remove = async () => {
+  const remove = () => {
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
     }
 
-    setDeleting(true);
-    const removed: boolean = await removeTimeEntry(timeEntry.id);
-    setDeleting(false);
-
-    if (removed) {
-      setOpen(false);
-    }
-    else {
-      setConfirmDelete(false);
-    }
+    removeTimeEntry.mutate(timeEntry.id, {
+      onSuccess: () => setOpen(false),
+      onError: () => setConfirmDelete(false),
+    });
   };
-
-  useEffect(() => {
-    loadActivities(null, setLoading)
-      .then(loadedActivities => {
-        setActivities(loadedActivities);
-        set(loadedActivities);
-      });
-  }, []);
 
   return <>
     <Dialog.Root open={open}
@@ -202,7 +156,7 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
                     {
                       endDate == null
                         ? 'Leave empty to keep this time entry running.'
-                        : `Duration: ${formatDuration(startDate, endDate)}`
+                        : `Duration: ${formatDuration(endDate.getTime() - startDate.getTime())}`
                     }
                   </Field.HelperText>
                   <Field.ErrorText>
@@ -215,7 +169,7 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
                                value={activityId == null ? [] : [activityId.toString()]}
                                defaultInputValue={timeEntry.activity?.name ?? ''}
                                onValueChange={details => setActivityId(
-                                 details.value.length == 0 ? null : parseInt(details.value[0])
+                                 details.value.length == 0 ? null : parseInt(details.value[0]),
                                )}
                                onInputValueChange={details => filter(details.inputValue)}
                                openOnClick>

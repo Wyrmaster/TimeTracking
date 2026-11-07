@@ -10,7 +10,7 @@ export class AddWorkspaceIntent extends BodyIntent<void, IWorkspaceDto>{
   // region Constructor
 
   constructor(workspace: IWorkspaceDto) {
-    super(workspace,`/api/v1/workspace`, HttpMethod.POST);
+    super(workspace,'/api/v1/workspace', HttpMethod.POST);
   }
 
   // endregion

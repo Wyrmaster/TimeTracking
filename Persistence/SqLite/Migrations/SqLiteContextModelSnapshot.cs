@@ -15,7 +15,7 @@ namespace TimeTracking.Persistence.SqLite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
             modelBuilder.Entity("TimeTracking.Persistence.Entities.Activity", b =>
                 {
@@ -98,7 +98,7 @@ namespace TimeTracking.Persistence.SqLite.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(64)
+                        .HasMaxLength(256)
                         .HasColumnType("TEXT")
                         .HasColumnName("password");
 
@@ -111,6 +111,9 @@ namespace TimeTracking.Persistence.SqLite.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ActiveWorkspaceId")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
                         .IsUnique();
 
                     b.ToTable("users", "tt");

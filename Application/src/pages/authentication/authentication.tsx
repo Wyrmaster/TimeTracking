@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import classes from './authentication.module.scss';
 import {Button, Card, Field, Input, Stack} from '@chakra-ui/react';
-import {useApi} from '../../providers/apiProvider.tsx';
+import {useApi} from '../../providers/apiContext.ts';
 import {AuthenticationIntent} from '../../network/intents/authentication/authenticationIntent.ts';
 import {toaster} from '../../components/ui/toaster.tsx';
 import {useNavigate} from 'react-router-dom';
@@ -16,12 +16,12 @@ export const Authentication = () => {
 
   const [ username, setUsername ] = useState<string>('');
   const [ password, setPassword ] = useState<string>('');
-  const {sendRequestAsync, setToken} = useApi();
+  const {sendAsync, setToken} = useApi();
   const navigate = useNavigate();
 
   const login = async () => {
 
-    const response = await sendRequestAsync(new AuthenticationIntent(username, password))
+    const response = await sendAsync(new AuthenticationIntent(username, password));
 
     if (response.code !== 200 || response.response === null) {
       toaster.create({description: 'Login failed', type: 'error'});
@@ -29,7 +29,7 @@ export const Authentication = () => {
     else {
       setToken(response.response.bearerToken);
       toaster.create({description: 'Successfully Logged in', type: 'success'});
-      navigate(`../${rts.Home}`)
+      navigate(`../${rts.Home}`);
     }
   };
 

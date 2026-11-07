@@ -1,4 +1,3 @@
-import {useWorkspace} from '../../providers/workspaceProvider.tsx';
 import {Badge, For, HStack, IconButton, Table} from '@chakra-ui/react';
 import {FaToggleOn} from 'react-icons/fa6';
 import {MdAdd, MdModeEdit} from 'react-icons/md';
@@ -6,16 +5,26 @@ import {RemoveWorkspace} from '../../components/removeWorkspace.tsx';
 import type {IWorkspaceDto} from '../../network/intents/workspace/workspaceDto.ts';
 import {useState} from 'react';
 import {WorkspaceDrawer} from '../../components/workspaceDrawer.tsx';
+import {useSetActiveWorkspace, useWorkspaces} from '../../queries/workspaces.ts';
 
+/**
+ * Stable placeholder while loading
+ */
+const NO_WORKSPACES: IWorkspaceDto[] = [];
+
+/**
+ * Page listing the workspaces of the user, a workspace can be activated, edited or removed
+ */
 export const Workspaces = () => {
-  const {workspaces, setActiveWorkspace} = useWorkspace();
+  const {data: workspaces = NO_WORKSPACES} = useWorkspaces();
+  const setActiveWorkspace = useSetActiveWorkspace();
   const [workspaceToEdit, setWorkspaceToEdit] = useState<IWorkspaceDto|null>(null);
   const [drawerIsOpen, setDrawerIsOpen] = useState<boolean>(false);
 
   return <>
     <Table.ScrollArea margin={'1.5em'}
                       flex={1}>
-      <Table.Root variant="outline"
+      <Table.Root variant={'outline'}
                   size={'lg'}
                   rounded={'md'}
                   stickyHeader>
@@ -44,7 +53,9 @@ export const Workspaces = () => {
                     {
                       workspace.isActive
                         ? <></>
-                        : <IconButton onClick={() => setActiveWorkspace(workspace.id)}
+                        : <IconButton onClick={() => setActiveWorkspace.mutate(workspace.id)}
+                                      aria-label={'Activate workspace'}
+                                      loading={setActiveWorkspace.isPending}
                                       rounded={'full'}
                                       variant={'surface'}
                                       size={'sm'}>

@@ -11,7 +11,7 @@ export class RegisterIntent extends BodyIntent<IToken, ICredentials> {
   // region Constructor
 
   constructor(credentials: ICredentials) {
-    super(credentials, `/api/v1/authentication/register`, HttpMethod.POST);
+    super(credentials, '/api/v1/authentication/register', HttpMethod.POST);
   }
 
   // endregion

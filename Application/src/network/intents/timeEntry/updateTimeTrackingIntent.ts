@@ -19,7 +19,7 @@ export class UpdateTimeTrackingIntent extends BodyIntent<void, ITimeEntryDto> {
   // region Constructor
 
   constructor(timeEntry: ITimeEntryDto) {
-    super(timeEntry, `/api/v1/timetracking/`, HttpMethod.PUT);
+    super(timeEntry, '/api/v1/timetracking/', HttpMethod.PUT);
   }
 
   // endregion

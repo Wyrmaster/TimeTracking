@@ -2,10 +2,6 @@ import {useMemo, useState, type KeyboardEvent} from 'react';
 import {Box, Flex, Text} from '@chakra-ui/react';
 import {IntToHex, IntToTextColor} from '../common/transformer.ts';
 
-/**
- * AI GENERATED
- */
-
 // region Constants
 
 /**
@@ -166,7 +162,7 @@ export const DonutChart = (
     segments,
     formatValue,
     onSegmentClick,
-    size = '25rem'
+    size = '25rem',
   }: IProps) => {
 
   const [hoveredIndex, setHoveredIndex] = useState<number|null>(null);
@@ -174,7 +170,7 @@ export const DonutChart = (
 
   const total: number = useMemo(
     () => segments.reduce((sum: number, segment: IDonutSegment) => sum + segment.value, 0),
-    [segments]
+    [segments],
   );
 
   const arcs: IArc[] = useMemo(() => {
@@ -207,7 +203,7 @@ export const DonutChart = (
         textColor: IntToTextColor(color),
         labelPosition: toPoint(middle, (INNER_RADIUS + OUTER_RADIUS) / 2),
         // the direction the arc is pulled out in, the unit vector pointing at its middle
-        offsetDirection: [directionX - CENTER, directionY - CENTER]
+        offsetDirection: [directionX - CENTER, directionY - CENTER],
       };
     });
   }, [segments, total]);
@@ -261,7 +257,7 @@ export const DonutChart = (
                         transform: `translate(${directionX * offset}px, ${directionY * offset}px)`,
                         transition: 'transform 160ms ease-out',
                         cursor: onSegmentClick ? 'pointer' : 'default',
-                        outline: 'none'
+                        outline: 'none',
                       }}
                       tabIndex={0}
                       role={'button'}

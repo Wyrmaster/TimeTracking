@@ -1,60 +1,53 @@
-const identifier: string  = 'TimeTracker';
+const identifier: string = 'TimeTracker';
 const tokenIdentifier: string = `${identifier}_Token`;
 const firstDayOfTheWeekIdentifier: string = `${identifier}_FirstDayOfTheWeek`;
 const useWorkWeekIdentifier: string = `${identifier}_UseWorkWeek`;
 
 /**
- * Class describing the settings for the current application
+ * Settings of the current user, persisted in the local storage
  */
-class Settings {
-
-  // region Properties
+const settings = {
 
   /**
    * Token used to authenticate requests
    */
-  public GetToken = (): string|null => localStorage.getItem(tokenIdentifier) ?? null;
+  getToken: (): string|null => localStorage.getItem(tokenIdentifier),
 
   /**
-   * Sets the token for the current solution
+   * Sets the token used to authenticate requests, an empty token removes it
    * @param token new token to set
    */
-  public SetToken = (token: string): void => {
-    if (token == '' || token == null){
+  setToken: (token: string): void => {
+    if (token == '') {
       localStorage.removeItem(tokenIdentifier);
     }
     else {
       localStorage.setItem(tokenIdentifier, token);
     }
-  }
+  },
 
   /**
-   * Gets the first day of the week for the current user
+   * Gets the first day of the week for the current user (0 = Sunday, 1 = Monday, ...)
    */
-  public GetFirstDayOfTheWeek = (): number => parseInt(localStorage.getItem(firstDayOfTheWeekIdentifier) ?? '0');
+  getFirstDayOfTheWeek: (): number => parseInt(localStorage.getItem(firstDayOfTheWeekIdentifier) ?? '0'),
 
   /**
    * Sets the first day of the week for the current user
    * @param day index of the first day of the week (0 = Sunday, 1 = Monday, ...)
    */
-  public SetFirstDayOfTheWeek = (day: number): void => localStorage.setItem(firstDayOfTheWeekIdentifier, day.toString());
+  setFirstDayOfTheWeek: (day: number): void => localStorage.setItem(firstDayOfTheWeekIdentifier, day.toString()),
 
   /**
    * Gets whether the current user wants to use the work week or not
    */
-  public GetUseWorkWeek = (): boolean => localStorage.getItem(useWorkWeekIdentifier)?.toUpperCase() === 'TRUE';
+  getUseWorkWeek: (): boolean => localStorage.getItem(useWorkWeekIdentifier)?.toUpperCase() === 'TRUE',
 
   /**
    * Sets whether the current user wants to use the work week or not
    * @param useWorkWeek whether to use the work week or not
    */
-  public SetUseWorkWeek = (useWorkWeek: boolean): void => localStorage.setItem(useWorkWeekIdentifier, useWorkWeek.toString());
+  setUseWorkWeek: (useWorkWeek: boolean): void => localStorage.setItem(useWorkWeekIdentifier, useWorkWeek.toString()),
 
+};
 
-  // endregion
-
-}
-
-const settings = new Settings();
-
-export { settings };
+export {settings};

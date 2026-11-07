@@ -1,11 +1,10 @@
 import {Intent} from './intent.ts';
 import {HttpMethod} from './httpMethod.ts';
-import type {ResponseCallback} from '../types/responseCallback.ts';
 
 /**
  * Intent used for http request with bodies
  */
-export abstract class BodyIntent<T,U> extends Intent<T> {
+export abstract class BodyIntent<T, U> extends Intent<T> {
 
   // region Fields
 
@@ -20,18 +19,15 @@ export abstract class BodyIntent<T,U> extends Intent<T> {
    * @param body content of the http request
    * @param route target of the http request
    * @param method http method used for the http request
-   * @param callback response method used when the http request finished
    * @protected
    */
-  protected constructor(body: U, route: string, method: HttpMethod, callback: ResponseCallback<T> = null) {
-    super(route, method, callback);
-    switch (method) {
-      case HttpMethod.GET:
-      case HttpMethod.DELETE:
-      {
-        throw new Error("Get and Delete request cannot have a body");
-      }
+  protected constructor(body: U, route: string, method: HttpMethod) {
+    super(route, method);
+
+    if (method == HttpMethod.GET || method == HttpMethod.DELETE) {
+      throw new Error('Get and Delete request cannot have a body');
     }
+
     this._body = body;
   }
 
@@ -42,7 +38,7 @@ export abstract class BodyIntent<T,U> extends Intent<T> {
   /**
    * returns the body of the http request
    */
-  public GetBody = (): U => this._body;
+  public getBody = (): U => this._body;
 
   // endregion
 

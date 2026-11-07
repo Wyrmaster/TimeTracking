@@ -25,11 +25,7 @@ import {
   LuChevronRight,
   LuDownload,
 } from 'react-icons/lu';
-import type {IStatisticsDto} from '../../network/intents/statistics/statisticsDto.ts';
-import {useApi} from '../../providers/apiProvider.tsx';
-import {useActivity} from '../../providers/activityProvider.tsx';
-import {useWorkspace} from '../../providers/workspaceProvider.tsx';
-import {GetStatisticsIntent} from '../../network/intents/statistics/getStatisticsIntent.ts';
+import {useApi} from '../../providers/apiContext.ts';
 import {
   GetStatisticsExportIntent,
   type StatisticsExportType,
@@ -43,11 +39,21 @@ import {WorkspaceSelect} from '../../components/workspaceSelect.tsx';
 import {IntToHex} from '../../common/transformer.ts';
 import {toaster} from '../../components/ui/toaster.tsx';
 import {settings} from '../../common/settings.ts';
-
-/**
- * Ticks of a single hour, the unit the durations of the statistics are reported in
- */
-const TICKS_PER_HOUR: number = 36_000_000_000;
+import {
+  formatDuration,
+  fromDateInput,
+  ticksToMilliseconds,
+  toDateInput,
+} from '../../common/dateFormat.ts';
+import {
+  DATE_PRESETS,
+  type DatePreset,
+  getPresetRange,
+  type IDateRange,
+} from '../../common/datePresets.ts';
+import {useWorkspaces} from '../../queries/workspaces.ts';
+import {useActivities} from '../../queries/activities.ts';
+import {useStatistics} from '../../queries/statistics.ts';
 
 /**
  * Amount of time entries shown per page of the table
@@ -55,103 +61,24 @@ const TICKS_PER_HOUR: number = 36_000_000_000;
 const PAGE_SIZE: number = 25;
 
 /**
- * Converts a duration in ticks into a formatted string in the format "HHh MMm".
+ * Stable placeholders while loading, the workspace select resets itself whenever it receives a new array
+ */
+const NO_WORKSPACES: IWorkspaceDto[] = [];
+const NO_ACTIVITIES: IActivityDto[] = [];
+const NO_ENTRIES: ITimeEntryDto[] = [];
+
+/**
+ * Formats a duration reported by the api in ticks as `Hh MMm`.
  * @param ticks The duration in ticks.
  */
-const formatDuration = (ticks: number): string => {
-  const totalMinutes: number = Math.round(ticks / (TICKS_PER_HOUR / 60));
-
-  const hours: number = Math.floor(totalMinutes / 60);
-  const minutes: number = totalMinutes % 60;
-
-  return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
-};
+const formatTicks = (ticks: number): string => formatDuration(ticksToMilliseconds(ticks));
 
 /**
- * Formats a date as the value of a `date` input (`YYYY-MM-DD`).
- * @param date The date to format.
- */
-const toDateInput = (date: Date): string =>
-  `${date.getFullYear()}`
-  + `-${(date.getMonth() + 1).toString().padStart(2, '0')}`
-  + `-${date.getDate().toString().padStart(2, '0')}`;
-
-/**
- * Parses the value of a `date` input as a local date.
- * @param value The value of the input (`YYYY-MM-DD`).
- * @param endOfDay Whether the last moment of the day should be returned instead of midnight.
- */
-const fromDateInput = (value: string, endOfDay: boolean = false): Date|null => {
-  if (value.length == 0) {
-    return null;
-  }
-
-  const [year, month, day] = value
-    .split('-')
-    .map(part => parseInt(part));
-  const date: Date = endOfDay
-    ? new Date(year, month - 1, day, 23, 59, 59, 999)
-    : new Date(year, month - 1, day);
-
-  return isNaN(date.getTime()) ? null : date;
-};
-
-/**
- * Predefined date ranges the statistics can be filtered by
- */
-type DatePreset = 'This week' | 'Last week' | 'This month' | 'Last month' | 'This year';
-
-const DATE_PRESETS: DatePreset[] = [
-  'This week',
-  'Last week',
-  'This month',
-  'Last month',
-  'This year',
-];
-
-/**
- * Resolves the first and the last day of a predefined date range, relative to today.
- *
- * Weeks start at the first day of the week configured in the settings.
- *
+ * Resolves a predefined date range relative to today.
  * @param preset The predefined date range.
  */
-const getPresetRange = (preset: DatePreset): {start: Date, end: Date} => {
-  const today: Date = new Date();
-  const year: number = today.getFullYear();
-  const month: number = today.getMonth();
-
-  const daysSinceWeekStart: number = (today.getDay() - settings.GetFirstDayOfTheWeek() + 7) % 7;
-  const weekStart: Date = new Date(year, month, today.getDate() - daysSinceWeekStart);
-
-  switch (preset) {
-    case 'This week':
-      return {
-        start: weekStart,
-        end: new Date(year, month, weekStart.getDate() + 6),
-      };
-    case 'Last week':
-      return {
-        start: new Date(year, month, weekStart.getDate() - 7),
-        end: new Date(year, month, weekStart.getDate() - 1),
-      };
-    case 'This month':
-      return {
-        start: new Date(year, month, 1),
-        end: new Date(year, month + 1, 0),
-      };
-    case 'Last month':
-      return {
-        start: new Date(year, month - 1, 1),
-        end: new Date(year, month, 0),
-      };
-    case 'This year':
-      return {
-        start: new Date(year, 0, 1),
-        end: new Date(year, 11, 31),
-      };
-  }
-};
+const getRange = (preset: DatePreset): IDateRange =>
+  getPresetRange(preset, new Date(), settings.getFirstDayOfTheWeek());
 
 /**
  * Hands the given file to the browser to be saved.
@@ -177,41 +104,39 @@ const saveFile = (file: Blob, fileName: string) => {
  */
 export const Statistics = () => {
 
-  const { sendRequestAsync, downloadAsync } = useApi();
-  const { workspaces } = useWorkspace();
-  const { loadActivities } = useActivity();
+  const {downloadAsync} = useApi();
+  const {data: workspaces = NO_WORKSPACES} = useWorkspaces();
 
-  const findActive = (workspaces: IWorkspaceDto[]) =>
-    workspaces.find(entry => entry.isActive) ?? null;
-
-  const [activities, setActivities] = useState<ITimeEntryDto[]>([]);
-
-  const [allTimeEntries, setAllTimeEntries] = useState<ITimeEntryDto[]>([]);
-  const [selectedActivityName, setSelectedActivityName] = useState<string|null>(null);
-  const [loadCount, setLoadCount] = useState<number>(0);
-  const [page, setPage] = useState<number>(1);
-
-  const [prevWorkspaces, setPrevWorkspaces] = useState<IWorkspaceDto[]>(workspaces);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<IWorkspaceDto|null>(findActive(workspaces));
-  const [workspaceActivities, setWorkspaceActivities] = useState<IActivityDto[]>([]);
-  const [loadingActivities, setLoadingActivities] = useState<boolean>(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number|null>(null);
   const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
-  const [startDate, setStartDate] = useState<string>(() => toDateInput(getPresetRange('This month').start));
-  const [endDate, setEndDate] = useState<string>(toDateInput(new Date()));
+  const [startDate, setStartDate] = useState<string>(() => toDateInput(getRange('This month').start));
+  const [endDate, setEndDate] = useState<string>(() => toDateInput(new Date()));
+  const [selectedActivityName, setSelectedActivityName] = useState<string|null>(null);
+  const [page, setPage] = useState<number>(1);
   const [exporting, setExporting] = useState<StatisticsExportType|null>(null);
 
+  // until a workspace is picked the active one is shown
+  const selectedWorkspace: IWorkspaceDto|null =
+    workspaces.find(workspace => workspace.id == selectedWorkspaceId)
+    ?? workspaces.find(workspace => workspace.isActive)
+    ?? null;
+
+  const {
+    data: workspaceActivities = NO_ACTIVITIES,
+    isLoading: loadingActivities,
+  } = useActivities(selectedWorkspace?.id ?? null);
+
   const {contains} = useFilter({sensitivity: 'base'});
-  const {collection, filter: filterActivities, set: setActivityItems} = useListCollection<IActivityDto>({
+  const {
+collection, filter: filterActivities, set: setActivityItems,
+} = useListCollection<IActivityDto>({
     initialItems: [],
     itemToString: activity => activity.name,
     itemToValue: activity => activity.id.toString(),
     filter: contains,
   });
 
-  if (workspaces !== prevWorkspaces) {
-    setPrevWorkspaces(workspaces);
-    setSelectedWorkspace(findActive(workspaces));
-  }
+  useEffect(() => setActivityItems(workspaceActivities), [workspaceActivities, setActivityItems]);
 
   const filter: IStatisticsFilter = useMemo(
     () => ({
@@ -225,35 +150,22 @@ export const Statistics = () => {
           .map(activity => activity.id)
           .filter(id => !selectedActivityIds.includes(id)),
     }),
-    [selectedWorkspace, startDate, endDate, selectedActivityIds, workspaceActivities]
+    [selectedWorkspace, startDate, endDate, selectedActivityIds, workspaceActivities],
   );
 
-  useEffect(() => {
-    loadActivities(selectedWorkspace?.id ?? null, setLoadingActivities)
-      .then(loadedActivities => {
-        setWorkspaceActivities(loadedActivities);
-        setActivityItems(loadedActivities);
-      });
-  }, [selectedWorkspace]);
+  const {data: statistics} = useStatistics(filter);
+  const allTimeEntries: ITimeEntryDto[] = statistics?.timeEntries ?? NO_ENTRIES;
+  const activities: ITimeEntryDto[] = statistics?.statistics ?? NO_ENTRIES;
 
-  useEffect(() => {
-    sendRequestAsync(new GetStatisticsIntent(filter))
-      .then(res => {
-        if (res.code != 200 || res.response == null) {
-          toaster.create({description: 'Failed to load the statistics...', type: 'error'});
-          return;
-        }
+  // a new filter clears the selected activity of the chart and the table
+  const filterKey: string = JSON.stringify(filter);
+  const [prevFilterKey, setPrevFilterKey] = useState<string>(filterKey);
 
-        const statistics: IStatisticsDto = res.response;
-
-        setActivities(statistics.statistics);
-        setAllTimeEntries(statistics.timeEntries);
-        setSelectedActivityName(null);
-        setPage(1);
-        // remounts the chart, so its selection is cleared together with the table
-        setLoadCount(count => count + 1);
-      });
-  }, [filter]);
+  if (filterKey != prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setSelectedActivityName(null);
+    setPage(1);
+  }
 
   /**
    * Downloads the filtered statistics as tab separated values.
@@ -262,16 +174,16 @@ export const Statistics = () => {
   const exportStatistics = async (type: StatisticsExportType) => {
     setExporting(type);
 
-    const file: Blob|null = await downloadAsync(new GetStatisticsExportIntent(filter, type));
-
-    setExporting(null);
-
-    if (file == null) {
-      toaster.create({description: 'Failed to export the statistics...', type: 'error'});
-      return;
+    try {
+      const file: Blob = await downloadAsync(new GetStatisticsExportIntent(filter, type));
+      saveFile(file, `statistics-${type.toLowerCase()}-${startDate}-${endDate}.tsv`);
     }
-
-    saveFile(file, `statistics-${type.toLowerCase()}-${startDate}-${endDate}.tsv`);
+    catch {
+      toaster.create({description: 'Failed to export the statistics...', type: 'error'});
+    }
+    finally {
+      setExporting(null);
+    }
   };
 
   /**
@@ -279,7 +191,7 @@ export const Statistics = () => {
    * @param preset The predefined date range.
    */
   const applyPreset = (preset: DatePreset) => {
-    const range = getPresetRange(preset);
+    const range: IDateRange = getRange(preset);
 
     setStartDate(toDateInput(range.start));
     setEndDate(toDateInput(range.end));
@@ -290,7 +202,7 @@ export const Statistics = () => {
    * @param preset The predefined date range.
    */
   const isPresetActive = (preset: DatePreset): boolean => {
-    const range = getPresetRange(preset);
+    const range: IDateRange = getRange(preset);
 
     return toDateInput(range.start) == startDate && toDateInput(range.end) == endDate;
   };
@@ -301,7 +213,7 @@ export const Statistics = () => {
       value: activity.duration,
       color: activity.color,
     })),
-    [activities]
+    [activities],
   );
 
   const segmentSelected = (segment?: IDonutSegment|null) => {
@@ -317,7 +229,7 @@ export const Statistics = () => {
       acc[curr.activityName] = [...(acc[curr.activityName] ?? []), curr];
       return acc;
     }, {}),
-    [allTimeEntries]
+    [allTimeEntries],
   );
 
   const shownTimeEntries: ITimeEntryDto[] = selectedActivityName == null
@@ -345,7 +257,7 @@ export const Statistics = () => {
             <WorkspaceSelect workspaces={workspaces}
                              padding={'0'}
                              onChange={workspace => {
-                               setSelectedWorkspace(workspace);
+                               setSelectedWorkspaceId(workspace.id);
                                setSelectedActivityIds([]);
                              }}/>
           </Box>
@@ -432,9 +344,9 @@ export const Statistics = () => {
 
       <Flex justify={'center'}
             flexShrink={'0'}>
-        <DonutChart key={loadCount}
+        <DonutChart key={filterKey}
                     segments={segments}
-                    formatValue={formatDuration}
+                    formatValue={formatTicks}
                     onSegmentClick={segmentSelected}/>
       </Flex>
 
@@ -482,9 +394,9 @@ export const Statistics = () => {
                            bg={IntToHex(item.color)}/>
                     </Table.Cell>
                     <Table.Cell>{item.activityName}</Table.Cell>
-                    <Table.Cell>{item.start == null ? '' : new Date(item.start).toLocaleString()}</Table.Cell>
-                    <Table.Cell>{item.end == null ? '' : new Date(item.end).toLocaleString()}</Table.Cell>
-                    <Table.Cell textAlign={'end'}>{formatDuration(item.duration)}</Table.Cell>
+                    <Table.Cell>{item.start?.toLocaleString() ?? ''}</Table.Cell>
+                    <Table.Cell>{item.end?.toLocaleString() ?? ''}</Table.Cell>
+                    <Table.Cell textAlign={'end'}>{formatTicks(item.duration)}</Table.Cell>
                   </Table.Row>
                 }
               </For>

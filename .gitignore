@@ -36,3 +36,6 @@ Desktop.ini
 .DS_Store
 
 .vscode
+
+# local secrets for docker compose
+.env

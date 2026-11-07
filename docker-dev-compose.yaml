@@ -19,7 +19,8 @@
       Token__Issuer: "TimeTracker"
       Token__Audience: "TimeTrackers"
       Token__SecretVariableName: "TokenSecret"
-      TokenSecret: "2f3fedd50944d446d7859a33a656cffe8783161725e127d5195ba88c41fc3ec1db4b0d4bcae14f0f4d76d209840e9c89d24b76b907236ba3355d395131df99fb"
+      # provided by the .env file next to this file, see .env.example
+      TokenSecret: "${TOKEN_SECRET:?Set TOKEN_SECRET in the .env file, see .env.example}"
 
   postgres:
     image: postgres:latest

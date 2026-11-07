@@ -17,5 +17,5 @@ const rts: Routes = new Routes();
 
 
 export {
-  rts
+  rts,
 };

@@ -1,50 +1,31 @@
 import classes from './overview.module.scss';
 import {Button, Flex, HStack, DatePicker, Portal, For} from '@chakra-ui/react';
-import {useActivity} from '../../providers/activityProvider.tsx';
 import {TimeTable} from '../../components/timeTable/timeTable.tsx';
 import {LuCalendar} from 'react-icons/lu';
-import {type DateValue, parseDate} from '@internationalized/date';
-import type {IActivityDto} from '../../network/intents/activities/activityDto.ts';
-import {useEffect, useState} from 'react';
+import {getLocalTimeZone, today} from '@internationalized/date';
 import {Activity} from '../../components/activity.tsx';
+import {useWeek} from '../../providers/weekContext.ts';
+import {useActivities} from '../../queries/activities.ts';
+import {useTimeEntries} from '../../queries/timeEntries.ts';
+import type {ITimeEntryDto} from '../../network/intents/timeEntry/timeEntryDto.ts';
+import type {IActivityDto} from '../../network/intents/activities/activityDto.ts';
+
+/**
+ * Stable placeholders while loading, a new array on every render would retrigger the effects of the time table
+ */
+const NO_ACTIVITIES: IActivityDto[] = [];
+const NO_TIME_ENTRIES: ITimeEntryDto[] = [];
 
 /**
  * Page showing the time entries of the selected week within a time table.
- * @constructor
  */
 export const Overview = () => {
 
   const {
-    timeEntries,
-    weekDays,
-    date,
-    setDate,
-    loadActivities,
-    activitiesRevision,
-    refreshTracking
-  } = useActivity();
-
-  const [activities, setActivities] = useState<IActivityDto[]>([]);
-
-  useEffect(() => {
-    refreshTracking().then();
-  }, []);
-
-  useEffect(() => {
-    loadActivities(null).then(setActivities);
-  }, [activitiesRevision]);
-
-  /**
-   * Formats a given Date object as a string in the format 'YYYY-MM-DD'.
-   *
-   * @param {Date} date - The Date object to be formatted.
-   * @returns {string} A string representing the date in 'YYYY-MM-DD' format.
-   */
-  const getDateString = (date: Date): string =>
-    `${date.getFullYear()}`
-    + `-${(date.getMonth() + 1).toString().padStart(2, '0')}`
-    + `-${date.getDate().toString().padStart(2, '0')}`
-  ;
+weekDays, date, setDate,
+} = useWeek();
+  const {data: activities = NO_ACTIVITIES} = useActivities(null);
+  const {data: timeEntries = NO_TIME_ENTRIES} = useTimeEntries(weekDays);
 
   return <>
     <Flex direction={'row'}
@@ -71,7 +52,7 @@ export const Overview = () => {
           <Button onClick={() => setDate(date.add({days: -7}))}>
             Previous Week
           </Button>
-          <Button onClick={() => setDate(parseDate(getDateString(new Date())) as unknown as DateValue) }>
+          <Button onClick={() => setDate(today(getLocalTimeZone()))}>
             Today
           </Button>
           <Button onClick={() => setDate(date.add({days: 7}))}>
@@ -94,15 +75,15 @@ export const Overview = () => {
             <Portal>
               <DatePicker.Positioner>
                 <DatePicker.Content>
-                  <DatePicker.View view="day">
+                  <DatePicker.View view='day'>
                     <DatePicker.Header />
                     <DatePicker.DayTable />
                   </DatePicker.View>
-                  <DatePicker.View view="month">
+                  <DatePicker.View view='month'>
                     <DatePicker.Header />
                     <DatePicker.MonthTable />
                   </DatePicker.View>
-                  <DatePicker.View view="year">
+                  <DatePicker.View view='year'>
                     <DatePicker.Header />
                     <DatePicker.YearTable />
                   </DatePicker.View>

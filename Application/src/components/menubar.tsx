@@ -10,7 +10,7 @@ import {
 } from 'react-icons/lu';
 import {rts} from '../common/routes.ts';
 import {ColorModeButton} from './ui/colorMode.tsx';
-import {useApi} from '../providers/apiProvider.tsx';
+import {useApi} from '../providers/apiContext.ts';
 
 interface IMenuItem {
   label: string;
@@ -19,10 +19,18 @@ interface IMenuItem {
 }
 
 const items: IMenuItem[] = [
-  {label: 'Overview', route: rts.Overview, icon: <LuLayoutDashboard/>},
-  {label: 'Activities', route: rts.Activities, icon: <LuActivity/>},
-  {label: 'Workspaces', route: rts.Workspaces, icon: <LuBriefcase/>},
-  {label: 'Statistics', route: rts.Statistics, icon: <LuChartColumn/>}
+  {
+label: 'Overview', route: rts.Overview, icon: <LuLayoutDashboard/>,
+},
+  {
+label: 'Activities', route: rts.Activities, icon: <LuActivity/>,
+},
+  {
+label: 'Workspaces', route: rts.Workspaces, icon: <LuBriefcase/>,
+},
+  {
+label: 'Statistics', route: rts.Statistics, icon: <LuChartColumn/>,
+},
 ];
 
 /**
@@ -65,7 +73,7 @@ export const Menubar = () => {
                 onClick={() => navigate(`/${rts.Home}/${item.route}`)}>
           {item.icon}
           {item.label}
-        </Button>
+        </Button>,
       )}
       <Spacer/>
       <ColorModeButton/>

@@ -1,7 +1,7 @@
 import {IconButton, Dialog, Portal, Button, CloseButton} from '@chakra-ui/react';
 import {MdDelete} from 'react-icons/md';
 import type {IWorkspaceDto} from '../network/intents/workspace/workspaceDto.ts';
-import {useWorkspace} from '../providers/workspaceProvider.tsx';
+import {useRemoveWorkspace} from '../queries/workspaces.ts';
 
 interface IProps {
   workspace: IWorkspaceDto;
@@ -9,12 +9,12 @@ interface IProps {
 
 export const RemoveWorkspace = ({workspace}: IProps) => {
 
-  const {removeWorkspace} = useWorkspace();
+  const removeWorkspace = useRemoveWorkspace();
 
   return <>
     <Dialog.Root size={'md'}>
       <Dialog.Trigger>
-        <IconButton rounded="full"
+        <IconButton rounded={'full'}
                     variant={'surface'}
                     size={'sm'}>
           <MdDelete />
@@ -39,12 +39,13 @@ export const RemoveWorkspace = ({workspace}: IProps) => {
                 <Button variant={'outline'}>Cancel</Button>
               </Dialog.ActionTrigger>
               <Button variant={'outline'}
-                      onClick={() => removeWorkspace(workspace.id)}>
+                      loading={removeWorkspace.isPending}
+                      onClick={() => removeWorkspace.mutate(workspace.id)}>
                 OK
               </Button>
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
+              <CloseButton size={'sm'} />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>

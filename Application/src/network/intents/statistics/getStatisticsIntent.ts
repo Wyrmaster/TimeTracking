@@ -9,7 +9,7 @@ import {type IStatisticsFilter, toStatisticsQuery} from './statisticsFilter.ts';
 export class GetStatisticsIntent extends Intent<IStatisticsDto> {
   constructor(filter: IStatisticsFilter) {
     super(
-      `/api/v1/statistics/${Intent.CreateQuery(toStatisticsQuery(filter))}`,
+      `/api/v1/statistics/${Intent.createQuery(toStatisticsQuery(filter))}`,
       HttpMethod.GET,
     );
   }

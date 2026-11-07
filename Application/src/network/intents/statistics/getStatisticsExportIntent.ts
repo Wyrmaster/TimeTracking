@@ -13,7 +13,7 @@ export type StatisticsExportType = 'Entries' | 'Summary';
 export class GetStatisticsExportIntent extends Intent<Blob> {
   constructor(filter: IStatisticsFilter, type: StatisticsExportType) {
     super(
-      `/api/v1/statistics/export/${Intent.CreateQuery([
+      `/api/v1/statistics/export/${Intent.createQuery([
         {key: 'type', values: [type]},
         ...toStatisticsQuery(filter),
       ])}`,

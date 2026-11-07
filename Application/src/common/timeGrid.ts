@@ -68,15 +68,6 @@ export interface ITimeEntrySegment {
 // region Methods
 
 /**
- * Ensures a value received from the api is usable as a date.
- *
- * Dates are transferred as ISO strings and are therefore not revived by `JSON.parse`.
- *
- * @param value The value to convert into a date.
- */
-const asDate = (value: Date|string): Date => value instanceof Date ? value : new Date(value);
-
-/**
  * Creates the local date representing midnight of the given day.
  * @param day The day to get the start of.
  */
@@ -96,8 +87,15 @@ const getMinutesOfDay = (date: Date): number =>
 const formatMinutes = (minutes: number): string => {
   const total: number = Math.floor(minutes);
 
-  return `${Math.floor(total / MINUTES_PER_HOUR).toString().padStart(2, '0')}`
-    + `:${(total % MINUTES_PER_HOUR).toString().padStart(2, '0')}`;
+  const hours: string = Math
+    .floor(total / MINUTES_PER_HOUR)
+    .toString()
+    .padStart(2, '0');
+  const remainingMinutes: string = (total % MINUTES_PER_HOUR)
+    .toString()
+    .padStart(2, '0');
+
+  return `${hours}:${remainingMinutes}`;
 };
 
 /**
@@ -132,12 +130,12 @@ const splitTimeEntries = (timeEntries: ITimeEntryDto[], days: DateValue[], now: 
   for (const timeEntry of timeEntries) {
 
     const isActive: boolean = timeEntry.end == null;
-    const start: Date = asDate(timeEntry.start);
+    const start: Date = timeEntry.start;
     // a running entry may have started after the given `now` was taken (or on a server whose clock is ahead),
     // it must still be shown instead of being dropped as an entry ending before it starts
     const end: Date = isActive
       ? new Date(Math.max(now.getTime(), start.getTime()))
-      : asDate(timeEntry.end as Date);
+      : timeEntry.end as Date;
 
     if (isNaN(start.getTime()) || isNaN(end.getTime()) || end.getTime() < start.getTime()) {
       continue;
@@ -170,7 +168,7 @@ const splitTimeEntries = (timeEntries: ITimeEntryDto[], days: DateValue[], now: 
         endMinute: Math.min(MINUTES_PER_DAY, (to - dayStart.getTime()) / MILLISECONDS_PER_MINUTE),
         continuesFromPreviousDay: start.getTime() < dayStart.getTime(),
         continuesOnNextDay: end.getTime() > dayEnd.getTime(),
-        isActive
+        isActive,
       });
     });
   }
@@ -186,11 +184,10 @@ export {
   MINUTES_PER_HOUR,
   MINUTES_PER_QUARTER,
   MINUTES_PER_DAY,
-  asDate,
   getStartOfDay,
   getMinutesOfDay,
   formatMinutes,
   isSameDay,
   getHoursOfDay,
-  splitTimeEntries
+  splitTimeEntries,
 };

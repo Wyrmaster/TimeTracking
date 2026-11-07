@@ -14,7 +14,7 @@ export class GetTrackingStateIntent extends Intent<ITrackingStateDto> {
   // region Constructor
 
   constructor(etag: string|null = null) {
-    super(`/api/v1/timetracking/state/`, HttpMethod.GET);
+    super('/api/v1/timetracking/state/', HttpMethod.GET);
 
     if (etag != null) {
       this._headers = {'If-None-Match': etag};
