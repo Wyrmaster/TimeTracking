@@ -1,9 +1,16 @@
 import type {ReactNode} from 'react';
-import {Button, Flex, Heading, Spacer} from '@chakra-ui/react';
+import {Button, Flex, Heading, IconButton, Spacer} from '@chakra-ui/react';
 import {useLocation, useNavigate} from 'react-router-dom';
-import {LuActivity, LuBriefcase, LuChartColumn, LuLayoutDashboard} from 'react-icons/lu';
+import {
+  LuActivity,
+  LuBriefcase,
+  LuChartColumn,
+  LuLayoutDashboard,
+  LuLogOut,
+} from 'react-icons/lu';
 import {rts} from '../common/routes.ts';
 import {ColorModeButton} from './ui/colorMode.tsx';
+import {useApi} from '../providers/apiProvider.tsx';
 
 interface IMenuItem {
   label: string;
@@ -26,8 +33,18 @@ export const Menubar = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const {setToken} = useApi();
 
   const isActive = (route: string) => location.pathname.startsWith(`/${rts.Home}/${route}`);
+
+  /**
+   * Signs the user out. The login page is loaded from scratch, so no data of the previous user
+   * remains in the providers.
+   */
+  const logout = () => {
+    setToken('');
+    window.location.assign(`/${rts.Authentication}`);
+  };
 
   return <>
     <Flex as={'nav'}
@@ -52,6 +69,12 @@ export const Menubar = () => {
       )}
       <Spacer/>
       <ColorModeButton/>
+      <IconButton onClick={logout}
+                  variant={'ghost'}
+                  aria-label={'Log out'}
+                  title={'Log out'}>
+        <LuLogOut/>
+      </IconButton>
     </Flex>
   </>;
 };

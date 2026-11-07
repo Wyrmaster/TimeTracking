@@ -110,7 +110,8 @@ class Api {
   };
 
   public SetToken = (token: string) => {
-    this._token = token;
+    // an empty token signs the user out, no authorization header is sent anymore
+    this._token = token == '' ? null : token;
     settings.SetToken(token);
   }
 
@@ -125,8 +126,12 @@ class Api {
   private readBodyAsync = async <T>(response: Response): Promise<T|null> => {
 
     // 204 No Content, 205 Reset Content and 304 Not Modified never carry a body
-    if (response.status == 204 || response.status == 205 || response.status == 304) return null;
-    if (response.body == null || response.headers.get('Content-Length') == '0') return null;
+    if (response.status == 204 || response.status == 205 || response.status == 304) {
+      return null;
+    }
+    if (response.body == null || response.headers.get('Content-Length') == '0') {
+      return null;
+    }
 
     const text: string = await response.text();
     return text.length == 0 ? null : JSON.parse(text) as T;
