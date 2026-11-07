@@ -20,6 +20,7 @@ import type {IActivityDto} from '../network/intents/activities/activityDto.ts';
 import {useActivity} from '../providers/activityProvider.tsx';
 import {IntToHex} from '../common/transformer.ts';
 import {asDate} from '../common/timeGrid.ts';
+import {LuTrash2} from 'react-icons/lu';
 
 /**
  * AI GENERATED
@@ -72,13 +73,20 @@ const formatDuration = (start: Date, end: Date): string => {
  */
 export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProps) => {
 
-  const {loadActivities, updateTimeEntry, addTimeEntry} = useActivity();
+  const {
+    loadActivities,
+    updateTimeEntry,
+    addTimeEntry,
+    removeTimeEntry,
+  } = useActivity();
 
   const isCreating: boolean = mode == 'create';
 
   const [activities, setActivities] = useState<IActivityDto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   const [start, setStart] = useState<string>(toDateTimeInput(asDate(timeEntry.start)));
   const [end, setEnd] = useState<string>(timeEntry.end == null ? '' : toDateTimeInput(asDate(timeEntry.end)));
@@ -131,6 +139,27 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
 
     setSaving(false);
     setOpen(false);
+  };
+
+  /**
+   * Removes the time entry and closes the dialog. The first click only asks for a confirmation.
+   */
+  const remove = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+
+    setDeleting(true);
+    const removed: boolean = await removeTimeEntry(timeEntry.id);
+    setDeleting(false);
+
+    if (removed) {
+      setOpen(false);
+    }
+    else {
+      setConfirmDelete(false);
+    }
   };
 
   useEffect(() => {
@@ -235,12 +264,25 @@ export const TimeEntryDialog = ({timeEntry, mode = 'edit', open, setOpen}: IProp
               </VStack>
             </Dialog.Body>
             <Dialog.Footer>
+              {
+                isCreating
+                  ? <></>
+                  : <Button variant={confirmDelete ? 'solid' : 'ghost'}
+                            colorPalette={'red'}
+                            marginEnd={'auto'}
+                            loading={deleting}
+                            disabled={saving}
+                            onClick={remove}>
+                      <LuTrash2/>
+                      {confirmDelete ? 'Confirm delete' : 'Delete'}
+                    </Button>
+              }
               <Dialog.ActionTrigger asChild>
                 <Button variant={'outline'}>Cancel</Button>
               </Dialog.ActionTrigger>
               <Button variant={'solid'}
                       loading={saving}
-                      disabled={startInvalid || endInvalid || activityMissing}
+                      disabled={startInvalid || endInvalid || activityMissing || deleting}
                       onClick={save}>
                 Save
               </Button>

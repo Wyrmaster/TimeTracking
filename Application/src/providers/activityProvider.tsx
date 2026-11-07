@@ -58,7 +58,7 @@ export interface IActivityContext {
 
   addTimeEntry: (timeEntry: ITimeEntryDto) => Promise<void>;
   updateTimeEntry: (timeEntry: ITimeEntryDto) => Promise<void>;
-  removeTimeEntry: (timeEntryId: number) => Promise<void>;
+  removeTimeEntry: (timeEntryId: number) => Promise<boolean>;
 }
 
 // endregion
@@ -309,16 +309,21 @@ export const ActivityProvider = ({children}: IChildren) => {
   /**
    * Asynchronously removes an existing time entry from the server.
    * @param timeEntryId - The ID of the time entry to be removed.
+   * @returns whether the time entry was removed.
    */
-  const removeTimeEntry = async (timeEntryId: number) => {
+  const removeTimeEntry = async (timeEntryId: number): Promise<boolean> => {
     const response: IResponse<void> = await sendRequestAsync(new RemoveTimeEntryIntent(timeEntryId));
 
     if (response.code == 200) {
       await loadTimeEntries();
+      // the removed time entry may have been the one currently tracked
+      await fetchActiveActivity();
       toaster.create({ description:'Successfully removed a time entry...', type:'success'});
+      return true;
     }
     else {
       toaster.create({ description:'Failed to remove a time entry...', type:'error'});
+      return false;
     }
   }
 
