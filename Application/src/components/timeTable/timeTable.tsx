@@ -444,6 +444,7 @@ export const TimeTable = ({timeEntries, days}: IProps) => {
                   <Text textStyle={'xs'}
                         fontWeight={'semibold'}
                         lineHeight={'short'}
+                        marginTop={'0.25rem'}
                         truncate>
                     {segment.timeEntry.activity?.name ?? 'No activity'}
                   </Text>
