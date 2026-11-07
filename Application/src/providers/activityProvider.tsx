@@ -243,7 +243,7 @@ export const ActivityProvider = ({children}: IChildren) => {
   const loadActivities = async (
     workspaceId: number|null = null,
     setLoading: (state: boolean) => void = () => {}
-  ) => {
+  ): Promise<IActivityDto[]> => {
     setLoading(true);
 
     const res = await sendRequestAsync(new GetActivitiesIntent(workspaceId))

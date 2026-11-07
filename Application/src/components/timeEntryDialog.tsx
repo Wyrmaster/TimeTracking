@@ -115,10 +115,11 @@ export const TimeEntryDialog = ({timeEntry, open, setOpen}: IProps) => {
   };
 
   useEffect(() => {
-    loadActivities(null, setLoading, loadedActivities => {
-      setActivities(loadedActivities);
-      set(loadedActivities);
-    }).then();
+    loadActivities(null, setLoading)
+      .then(loadedActivities => {
+        setActivities(loadedActivities);
+        set(loadedActivities);
+      });
   }, []);
 
   return <>

@@ -206,4 +206,4 @@ app
 app.MapGraphQL(graphQlPath);
 app.MapNitroApp(graphiQlPath);
 
-app.Run("http://0.0.0.0:3200");
+app.Run("http://0.0.0.0:9500");
