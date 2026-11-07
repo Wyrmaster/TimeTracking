@@ -11,21 +11,6 @@ namespace TimeTracking.Service.GraphQL;
 /// </summary>
 public class TimeTrackingQuery
 {
-  #region Fields
-  
-  private readonly Context _context;
-
-  #endregion
-
-  #region Constructor
-
-  public TimeTrackingQuery(Context context)
-  {
-    this._context = context;
-  }
-
-  #endregion
-  
   #region Queries
 
   /// <summary>
@@ -33,11 +18,12 @@ public class TimeTrackingQuery
   /// </summary>
   /// <param name="user"></param>
   /// <returns></returns>
-  [UsePaging]
+  [UsePaging(IncludeTotalCount = true)]
+  [UseProjection]
   [UseFiltering]
   [UseSorting]
   [Authorize]
-  public IQueryable<Workspace> GetWorkspaces(ClaimsPrincipal user)
+  public IQueryable<Workspace> GetWorkspaces(ClaimsPrincipal user, [Service] Context context)
   {
     string? userName = user.GetUserName();
 
@@ -45,7 +31,7 @@ public class TimeTrackingQuery
       ? Enumerable
         .Empty<Workspace>()
         .AsQueryable()
-      : this._context.Workspaces.Where(entry => 
+      : context.Workspaces.Where(entry => 
           entry.User != null
           && entry.User.Username == userName
       );
@@ -56,11 +42,12 @@ public class TimeTrackingQuery
   /// </summary>
   /// <param name="user"></param>
   /// <returns></returns>
-  [UsePaging]
+  [UsePaging(IncludeTotalCount = true)]
+  [UseProjection]
   [UseFiltering]
   [UseSorting]
   [Authorize]
-  public IQueryable<Activity> GetActivities(ClaimsPrincipal user)
+  public IQueryable<Activity> GetActivities(ClaimsPrincipal user, [Service] Context context)
   {
     string? userName = user.GetUserName();
     
@@ -68,7 +55,7 @@ public class TimeTrackingQuery
       ? Enumerable
         .Empty<Activity>()
         .AsQueryable()
-      : this._context.Activities.Where(entry => 
+      : context.Activities.Where(entry => 
           entry.Workspace != null
           && entry.Workspace.User != null
           && entry.Workspace.User.Username == userName
@@ -80,11 +67,12 @@ public class TimeTrackingQuery
   /// </summary>
   /// <param name="user"></param>
   /// <returns></returns>
-  [UsePaging]
+  [UsePaging(IncludeTotalCount = true)]
+  [UseProjection]
   [UseFiltering]
   [UseSorting]
   [Authorize]
-  public IQueryable<TimeEntry> GetTimeEntries(ClaimsPrincipal user)
+  public IQueryable<TimeEntry> GetTimeEntries(ClaimsPrincipal user, [Service] Context context)
   {
     string? userName = user.GetUserName();
     
@@ -92,7 +80,7 @@ public class TimeTrackingQuery
       ? Enumerable
         .Empty<TimeEntry>()
         .AsQueryable()
-      : this._context.TimeEntries.Where(entry => 
+      : context.TimeEntries.Where(entry => 
           entry.Activity != null
           && entry.Activity.Workspace != null
           && entry.Activity.Workspace.User != null

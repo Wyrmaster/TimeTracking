@@ -11,34 +11,17 @@ namespace TimeTracking.Service.GraphQL.Mutations;
 /// </summary>
 public partial class TimeTrackingMutation
 {
-  #region Fields
-
-  private readonly ITimeTrackingService _timeTrackingService;
-  private readonly IWorkspaceService _workspaceService;
-  private readonly IActivityService _activityService;
-
-  #endregion
-
-  #region Constructor
-
-  public TimeTrackingMutation
-  (
-    ITimeTrackingService timeTrackingService,
-    IWorkspaceService workspaceService,
-    IActivityService activityService
-  )
-  {
-    this._timeTrackingService = timeTrackingService;
-    this._workspaceService = workspaceService;
-    this._activityService = activityService;
-  }
-
-  #endregion
-
   #region Mutations
 
   [Authorize]
-  public Task<bool> StartTracking(ClaimsPrincipal user, long activityId, string description = "", CancellationToken token = default)
+  public Task<bool> StartTracking
+  (
+    ClaimsPrincipal user,
+    [Service] ITimeTrackingService timeTrackingService,
+    long activityId,
+    string description = "",
+    CancellationToken token = default
+  )
   {
     string? userName = user.GetUserName();
 
@@ -47,7 +30,7 @@ public partial class TimeTrackingMutation
       return Task.FromResult(false);
     }
 
-    return this._timeTrackingService.StartTrackingAsync
+    return timeTrackingService.StartTrackingAsync
     (
       userName,
       new StartActivityDto { ActivityId = activityId, Description = description },
@@ -56,7 +39,12 @@ public partial class TimeTrackingMutation
   }
 
   [Authorize]
-  public async Task<bool> StopTracking(ClaimsPrincipal user, CancellationToken token = default)
+  public async Task<bool> StopTracking
+  (
+    ClaimsPrincipal user,
+    [Service] ITimeTrackingService timeTrackingService,
+    CancellationToken token = default
+  )
   {
     string? userName = user.GetUserName();
 
@@ -65,7 +53,7 @@ public partial class TimeTrackingMutation
       return false;
     }
 
-    await this._timeTrackingService.StopTrackingAsync(userName, token);
+    await timeTrackingService.StopTrackingAsync(userName, token);
 
     return true;
   }

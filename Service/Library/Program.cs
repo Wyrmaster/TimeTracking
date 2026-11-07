@@ -12,6 +12,7 @@ using TimeTracking.Service.Endpoints;
 using TimeTracking.Service.Extensions;
 using TimeTracking.Service.GraphQL;
 using TimeTracking.Service.GraphQL.Mutations;
+using TimeTracking.Service.GraphQL.Types;
 using TimeTracking.Service.Interfaces;
 using TimeTracking.Service.Services;
 
@@ -111,12 +112,16 @@ builder.Services.AddSingleton(new TokenSecretConfiguration(tokenSecret));
 
 builder.Services
   .AddGraphQLServer()
-  .AddAuthorizationCore()
+  .AddAuthorization()
     .AddQueryType<TimeTrackingQuery>()
     .AddMutationType<TimeTrackingMutation>()
+    .AddType<UserType>()
+  .AddProjections()
   .AddFiltering()
   .AddSorting()
   .AddPagingArguments()
+  // show the actual exception instead of "Unexpected Execution Error" while developing
+  .ModifyRequestOptions(options => options.IncludeExceptionDetails = builder.Environment.IsDevelopment())
 ;
 
 builder.Services.AddAuthorization();
