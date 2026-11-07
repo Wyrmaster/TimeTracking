@@ -7,7 +7,7 @@ using TimeTracking.Service.Interfaces;
 namespace TimeTracking.Service.Services;
 
 /// <inheritdoc cref="ITimeTrackingService"/>
-public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : ITimeTrackingService
+public class TimeTrackingService(Context context) : ITimeTrackingService
 {
   #region Constants
 
@@ -37,8 +37,6 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
     }
 
     await context.SaveChangesAsync(cancellationToken);
-
-    await this.NotifyAsync(username, activity?.Id, now, cancellationToken);
 
     return new ActivityTrackingDto(activity?.Id ?? 0, now);
   }
@@ -141,8 +139,6 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
 
     await context.SaveChangesAsync(token);
 
-    await this.NotifyAsync(userName, activity.Id, now, token);
-
     return true;
   }
 
@@ -153,8 +149,6 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
 
     await this.StopActiveTimeEntryAsync(userName, now, token);
     await context.SaveChangesAsync(token);
-
-    await this.NotifyAsync(userName, null, now, token);
   }
 
   /// <inheritdoc cref="ITimeTrackingService.SwitchTrackingWorkspaceAsync"/>
@@ -424,28 +418,6 @@ public class TimeTrackingService(Context context, ITimeHub? timeHub = null) : IT
                   && entity.Workspace.User.ActiveWorkspaceId == entity.Workspace.Id,
         token
       );
-
-  /// <summary>
-  ///   Notifies connected clients about a change of the tracked activity
-  /// </summary>
-  /// <param name="userName">name of the user</param>
-  /// <param name="activityId">id of the activity that started tracking, null if tracking only stopped</param>
-  /// <param name="now">timestamp of the change</param>
-  /// <param name="token"></param>
-  private async Task NotifyAsync(string userName, long? activityId, DateTime now, CancellationToken token)
-  {
-    if (timeHub == null)
-    {
-      return;
-    }
-
-    await timeHub.StopTrackingAsync(userName, token);
-
-    if (activityId != null)
-    {
-      await timeHub.StartTrackingAsync(userName, activityId.Value, now, token);
-    }
-  }
 
   /// <summary>
   ///   Filters a set of time entries by workspace

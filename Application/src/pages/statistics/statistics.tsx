@@ -38,7 +38,7 @@ import {DonutChart, type IDonutSegment} from '../../components/donutChart.tsx';
 import {WorkspaceSelect} from '../../components/workspaceSelect.tsx';
 import {IntToHex} from '../../common/transformer.ts';
 import {toaster} from '../../components/ui/toaster.tsx';
-import {settings} from '../../common/settings.ts';
+import {useWeek} from '../../providers/weekContext.ts';
 import {
   formatDuration,
   fromDateInput,
@@ -74,13 +74,6 @@ const NO_ENTRIES: ITimeEntryDto[] = [];
 const formatTicks = (ticks: number): string => formatDuration(ticksToMilliseconds(ticks));
 
 /**
- * Resolves a predefined date range relative to today.
- * @param preset The predefined date range.
- */
-const getRange = (preset: DatePreset): IDateRange =>
-  getPresetRange(preset, new Date(), settings.getFirstDayOfTheWeek());
-
-/**
  * Hands the given file to the browser to be saved.
  * @param file The file to save.
  * @param fileName The name the file is saved with.
@@ -105,6 +98,14 @@ const saveFile = (file: Blob, fileName: string) => {
 export const Statistics = () => {
 
   const {downloadAsync} = useApi();
+  const {firstDayOfTheWeek} = useWeek();
+
+  /**
+   * Resolves a predefined date range relative to today.
+   * @param preset The predefined date range.
+   */
+  const getRange = (preset: DatePreset): IDateRange => getPresetRange(preset, new Date(), firstDayOfTheWeek);
+
   const {data: workspaces = NO_WORKSPACES} = useWorkspaces();
 
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number|null>(null);

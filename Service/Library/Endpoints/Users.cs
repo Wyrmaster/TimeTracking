@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using TimeTracking.Service.Common;
 using TimeTracking.Service.Dto;
+using TimeTracking.Service.Extensions;
 using TimeTracking.Service.Interfaces;
 
 namespace TimeTracking.Service.Endpoints;
@@ -23,6 +25,11 @@ public static class Users
 
     group.MapPost("", Users.AuthenticateAsync);
     group.MapPost("register/", Users.CreateNewUserAsync);
+
+    group
+      .MapPut("password/", Users.ChangePasswordAsync)
+      .RequireAuthorization()
+      .AddEndpointFilter<UserNameEndpointFilter>();
     
     return self;
   }
@@ -75,6 +82,42 @@ public static class Users
     return authenticationToken == null
       ? Results.Conflict()
       : Results.Ok(authenticationToken);
+  }
+
+  /// <summary>
+  ///   Changes the password of the authenticated user
+  /// </summary>
+  /// <param name="context"></param>
+  /// <param name="accountService"></param>
+  /// <param name="changePassword">the current and the new password</param>
+  /// <param name="token">Token for task cancellation.</param>
+  /// <returns>No content on success, bad request if the current password is wrong</returns>
+  private static async Task<IResult> ChangePasswordAsync
+  (
+    HttpContext context,
+    IAccountService accountService,
+    [FromBody] ChangePasswordDto changePassword,
+    CancellationToken token = default
+  )
+  {
+    if (string.IsNullOrWhiteSpace(changePassword.NewPassword))
+    {
+      return Results.BadRequest();
+    }
+
+    string userName = context.GetRequiredUserName();
+
+    bool changed = await accountService.ChangePasswordAsync
+    (
+      userName,
+      changePassword.OldPassword,
+      changePassword.NewPassword,
+      token
+    );
+
+    return changed
+      ? Results.NoContent()
+      : Results.BadRequest();
   }
 
   #endregion

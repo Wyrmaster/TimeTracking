@@ -170,6 +170,41 @@ public abstract class WorkspaceTests<TFixture> :IAsyncLifetime
     );
   }
 
+  [Fact(DisplayName = "Workspace - Remove Active")]
+  public async Task RemoveActiveWorkspace()
+  {
+    // setup
+    Workspace workspace = new()
+    {
+      User = await this._context
+        .Users
+        .AsTracking()
+        .FirstAsync(),
+      Name = "Active Workspace to be deleted",
+      Description = "Test Description to be deleted",
+    };
+    await this._context.Workspaces.AddAsync(workspace);
+    await this._context.SaveChangesAsync();
+
+    IWorkspaceService workspaceService = new WorkspaceService(this._context, new TimeTrackingService(this._context));
+    await workspaceService.SetActiveWorkspaceAsync(User, workspace.Id);
+
+    // arrange
+    bool result = await workspaceService.RemoveWorkspaceAsync(User, workspace.Id);
+
+    // Assert
+    User user = await this._context
+      .Users
+      .Include(entity => entity.ActiveWorkspace)
+      .FirstAsync();
+    Assert.Multiple
+    (
+      () => Assert.True(result),
+      () => Assert.Single(this._context.Workspaces),
+      () => Assert.True(user.ActiveWorkspace!.IsDefault)
+    );
+  }
+
   [Fact(DisplayName = "Workspace - Fail Remove Default")]
   public async Task RemoveDefaultWorkspace()
   {

@@ -10,6 +10,7 @@ class Routes {
   public Workspaces: string = 'workspaces';
   public Statistics: string = 'statistics';
   public Register: string = 'register';
+  public Settings: string = 'settings';
 
 }
 

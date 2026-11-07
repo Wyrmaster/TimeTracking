@@ -16,12 +16,12 @@ Take control of your time with an intuitive, self-hosted time tracking solution.
 
 ## 🚀 Quick Start
 
-Get up and running in minutes with Docker Compose. The secret signing the login tokens is read from a `.env` file
-next to the compose file, which is ignored by git:
+Get up and running in minutes with Docker Compose. The secrets (token signing key, database password) are read from
+a `.env` file next to the compose file, which is ignored by git:
 
 ```shell script
 cp .env.example .env
-# fill in TOKEN_SECRET, e.g. with the output of: openssl rand -hex 64
+# fill in TokenSecret (e.g. with the output of: openssl rand -hex 64) and POSTGRES_PASSWORD
 
 docker-compose up
 
@@ -44,11 +44,9 @@ This application uses JWT tokens for secure authentication. Configure the follow
 | `Token__Audience` | Token audience |
 | `Token__SecretVariableName` | Variable name containing your secret (allows non-plaintext injection) |
 
-The secret itself is never part of the repository. During development store it as user secret:
-
-```shell script
-dotnet user-secrets set TokenSecret "$(openssl rand -hex 64)" --project Service/Library
-```
+The secret itself is never part of the repository. During development the service loads the same `.env` file from
+the repository root on startup, so `TokenSecret` and `ConnectionStrings__TimeTrackingPostgresql` only have to be set
+there. Variables that are already set in the environment take precedence over the file.
 
 ---
 

@@ -17,6 +17,12 @@ export interface IWeekContext {
   setUseWorkWeek: (useWorkWeek: boolean) => void;
 
   /**
+   * The day full weeks start at (0 = Sunday, 1 = Monday, ...)
+   */
+  firstDayOfTheWeek: number;
+  setFirstDayOfTheWeek: (day: number) => void;
+
+  /**
    * The days of the shown week
    */
   weekDays: DateValue[];

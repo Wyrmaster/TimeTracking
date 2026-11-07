@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Moq;
 using TimeTracking.Persistence;
 using TimeTracking.Persistence.Entities;
 using TimeTracking.Service.Dto.Data;
@@ -28,8 +27,6 @@ public abstract class TimeTrackingDiceTests<TFixture> :IAsyncLifetime
   private ITimeTrackingService _timeTracking = null!;
   
   private TFixture _fixture = null!;
-  
-  private readonly Mock<ITimeHub> _timeHub = new();
 
   #endregion
 
@@ -43,7 +40,7 @@ public abstract class TimeTrackingDiceTests<TFixture> :IAsyncLifetime
     
     this._context = this._fixture.CreateDatabaseContext();
     
-    this._timeTracking = new TimeTrackingService(this._context, this._timeHub.Object);
+    this._timeTracking = new TimeTrackingService(this._context);
   }
 
   /// <inheritdoc/>
@@ -278,7 +275,7 @@ public abstract class TimeTrackingDiceTests<TFixture> :IAsyncLifetime
     await this.AssignWorkspaceOwnersAsync();
     
     // arrange
-    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context, this._timeHub.Object);
+    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context);
     bool result = await timeTrackingService.AddTimeEntryAsync(User, new TimeEntryDto
     {
       Activity = await this._context.Activities
@@ -364,7 +361,7 @@ public abstract class TimeTrackingDiceTests<TFixture> :IAsyncLifetime
       end = DateTime.Now.AddMinutes(-5);
 
     // arrange
-    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context, this._timeHub.Object);
+    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context);
     const string testDescriptionUpdated = "Test Description Updated";
     await timeTrackingService.UpdateTimeEntryAsync(User, new TimeEntryDto
     {
@@ -455,7 +452,7 @@ public abstract class TimeTrackingDiceTests<TFixture> :IAsyncLifetime
     this._context.ChangeTracker.Clear();
     
     // arrange
-    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context, this._timeHub.Object);
+    ITimeTrackingService timeTrackingService = new TimeTrackingService(this._context);
     bool result = await timeTrackingService.RemoveTimeEntryAsync(User, (await this._context.TimeEntries.FirstAsync()).Id);
     
     // Assert

@@ -1,4 +1,5 @@
 using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,13 @@ const string
   graphiQlPath = "/graphql/v1/nitro",
   tokenConfigurationKey = "Token";
 
+// load the secrets from the .env file in the repository root (or any parent of the working directory) into the
+// environment variables, variables that are already set (e.g. by docker compose) win over the file
+Env
+  .TraversePath()
+  .NoClobber()
+  .Load();
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // load the token configuration
@@ -34,8 +42,7 @@ if (tokenConfiguration == null)
   throw new ArgumentException($"Missing configuration for {nameof(TokenConfiguration)}");
 }
 
-// read the symmetric key from the configuration: an environment variable, or the user secrets during development
-// (dotnet user-secrets set <SecretVariableName> <secret> --project Service)
+// read the symmetric key from the configuration: an environment variable or the .env file, see .env.example
 string? tokenSecret = builder.Configuration[tokenConfiguration.SecretVariableName];
 
 if (string.IsNullOrEmpty(tokenSecret))
@@ -43,7 +50,7 @@ if (string.IsNullOrEmpty(tokenSecret))
   throw new ArgumentException
   (
     $"Missing token secret {tokenConfiguration.SecretVariableName}, "
-    + "set it as environment variable or as user secret during development"
+    + "set it as environment variable or in the .env file, see .env.example"
   );
 }
 

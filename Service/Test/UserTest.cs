@@ -113,6 +113,28 @@ public abstract class UserTest<TFixture> :IAsyncLifetime
     );
   }
 
+  [Fact(DisplayName = "User - Change Password")]
+  public async Task TestChangePassword()
+  {
+    IAccountService service = this.CreateService();
+
+    await service.RegisterUserAsync("me", "pw");
+
+    bool wrongOldPassword = await service.ChangePasswordAsync("me", "wrong", "new");
+    bool changed = await service.ChangePasswordAsync("me", "pw", "new");
+
+    Token? oldPassword = await service.AuthenticateAsync("me", "pw");
+    Token? newPassword = await service.AuthenticateAsync("me", "new");
+
+    Assert.Multiple
+    (
+      () => Assert.False(wrongOldPassword),
+      () => Assert.True(changed),
+      () => Assert.Null(oldPassword),
+      () => Assert.NotNull(newPassword)
+    );
+  }
+
   [Fact(DisplayName = "User - Upgrade Legacy Password Hash")]
   public async Task TestUpgradeLegacyHash()
   {

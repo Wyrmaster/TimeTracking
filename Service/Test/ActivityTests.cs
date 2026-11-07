@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Moq;
 using TimeTracking.Persistence;
 using TimeTracking.Persistence.Entities;
 using TimeTracking.Service.Dto.Data;
@@ -25,8 +24,6 @@ public abstract class ActivityTests<TFixture> :IAsyncLifetime
   private ITimeTrackingService _timeTracking = null!;
   
   private TFixture _fixture = null!;
-  
-  private readonly Mock<ITimeHub> _timeHub = new();
 
   #endregion
   
@@ -40,7 +37,7 @@ public abstract class ActivityTests<TFixture> :IAsyncLifetime
     
     this._context = this._fixture.CreateDatabaseContext();
     
-    this._timeTracking = new TimeTrackingService(this._context, this._timeHub.Object);
+    this._timeTracking = new TimeTrackingService(this._context);
 
     Workspace workspace = new()
     {

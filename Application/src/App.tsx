@@ -8,6 +8,7 @@ import {Activities} from './pages/activities/activities.tsx';
 import {Workspaces} from './pages/workspaces/workspaces.tsx';
 import {Statistics} from './pages/statistics/statistics.tsx';
 import {Overview} from './pages/overview/overview.tsx';
+import {Settings} from './pages/settings/settings.tsx';
 
 const App = () => {
 
@@ -29,6 +30,7 @@ const App = () => {
           <Route path={rts.Workspaces} element={<Workspaces/>}/>
           <Route path={rts.Statistics} element={<Statistics/>}/>
           <Route path={rts.Overview} element={<Overview/>}/>
+          <Route path={rts.Settings} element={<Settings/>}/>
         </Route>
       </Routes>
     </>

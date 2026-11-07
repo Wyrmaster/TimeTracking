@@ -6,6 +6,11 @@ import type {IChildren} from '../../interfaces/children.ts';
 export type ColorMode = 'light' | 'dark';
 
 /**
+ * Color mode picked by the user, `system` follows the color scheme of the operating system
+ */
+export type ColorModePreference = ColorMode | 'system';
+
+/**
  * Key the selected color mode is persisted with in the local storage
  */
 const STORAGE_KEY: string = 'TimeTracker_Theme';
@@ -30,13 +35,19 @@ export const ColorModeProvider = ({children}: IChildren) =>
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export const useColorMode = () => {
-  const {resolvedTheme, setTheme} = useTheme();
+  const {
+    theme,
+    resolvedTheme,
+    setTheme,
+  } = useTheme();
 
   const colorMode: ColorMode = resolvedTheme == 'dark' ? 'dark' : 'light';
+  const preference: ColorModePreference = theme == 'light' || theme == 'dark' ? theme : 'system';
 
   return {
     colorMode,
-    setColorMode: (mode: ColorMode) => setTheme(mode),
+    preference,
+    setColorMode: (mode: ColorModePreference) => setTheme(mode),
     toggleColorMode: () => setTheme(colorMode == 'dark' ? 'light' : 'dark'),
   };
 };

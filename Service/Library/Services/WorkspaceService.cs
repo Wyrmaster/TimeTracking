@@ -64,6 +64,7 @@ public class WorkspaceService(Context context, ITimeTrackingService timeTracking
     Workspace? workspace = await context
       .Workspaces
       .AsTracking()
+      .Include(entity => entity.User)
       .SingleOrDefaultAsync
       (
         entry => entry.User != null
@@ -77,7 +78,25 @@ public class WorkspaceService(Context context, ITimeTrackingService timeTracking
     {
       return false;
     }
-    
+
+    // the user still references the active workspace, fall back to the default workspace before removing it
+    if (workspace.User!.ActiveWorkspaceId == workspace.Id)
+    {
+      Workspace defaultWorkspace = await context
+        .Workspaces
+        .AsTracking()
+        .SingleAsync
+        (
+          entry => entry.User != null
+                   && entry.User.Username == userName
+                   && entry.IsDefault,
+          token
+        );
+
+      await timeTrackingService.SwitchTrackingWorkspaceAsync(userName, defaultWorkspace, token);
+      workspace.User.ActiveWorkspaceId = defaultWorkspace.Id;
+    }
+
     context.Workspaces.Remove(workspace);
     await context.SaveChangesAsync(token);
 

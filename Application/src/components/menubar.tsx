@@ -7,6 +7,7 @@ import {
   LuChartColumn,
   LuLayoutDashboard,
   LuLogOut,
+  LuSettings,
 } from 'react-icons/lu';
 import {rts} from '../common/routes.ts';
 import {ColorModeButton} from './ui/colorMode.tsx';
@@ -30,6 +31,9 @@ label: 'Workspaces', route: rts.Workspaces, icon: <LuBriefcase/>,
 },
   {
 label: 'Statistics', route: rts.Statistics, icon: <LuChartColumn/>,
+},
+  {
+label: 'Settings', route: rts.Settings, icon: <LuSettings/>,
 },
 ];
 
