@@ -8,12 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\.dockerignore">
-      <Link>.dockerignore</Link>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Persistence\Postgresql\TimeTracking.Persistence.Postgresql.csproj" />
     <ProjectReference Include="..\Persistence\SqLite\TimeTracking.Persistence.SqLite.csproj" />
   </ItemGroup>

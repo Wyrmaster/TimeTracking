@@ -110,5 +110,14 @@ public interface ITimeTrackingService
   /// <returns>True if the time entry was successfully deleted; otherwise, false.</returns>
   Task<bool> RemoteTimeEntry(string userName, long timeEntryId, CancellationToken token = default);
 
+  /// <summary>
+  ///   Resolves a lightweight fingerprint of the tracking state of the given user, allowing clients to detect
+  ///   changes made by other clients without loading all time entries.
+  /// </summary>
+  /// <param name="userName">The username of the registered user.</param>
+  /// <param name="token">The cancellation token to observe while waiting for the task to complete.</param>
+  /// <returns>The current tracking state of the user.</returns>
+  Task<TrackingStateDto> GetTrackingStateAsync(string userName, CancellationToken token = default);
+
   #endregion
 }
